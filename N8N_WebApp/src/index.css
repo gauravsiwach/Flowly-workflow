@@ -1,0 +1,519 @@
+/*
+  Final, consolidated stylesheet.
+  - Removes all React Flow default styles.
+  - Implements essential styles for React Flow components.
+  - Provides definitive, targeted styling for custom nodes.
+*/
+
+html,
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  width: 100vw;
+  height: 100vh;
+}
+
+/* --- Minimal Required React Flow Styles --- */
+.react-flow__pane {
+  cursor: grab;
+}
+
+.react-flow__background {
+  background-color: #FAFBFC;
+}
+
+.react-flow__background.dots .react-flow__background__pattern {
+    fill: #E8EAED;
+}
+
+.react-flow__controls {
+  box-shadow: 0 0 2px 1px rgba(0,0,0,.08);
+}
+
+.react-flow__controls button {
+  background-color: #fff;
+  border-bottom: 1px solid #eee;
+}
+
+.react-flow__controls button:hover {
+  background-color: #f4f4f4;
+}
+/* --- End React Flow Styles --- */
+
+
+/* --- React Flow Resize Handles --- */
+.react-flow__resize-control {
+  border: 2px solid #3B82F6 !important;
+  background: white !important;
+  border-radius: 4px !important;
+  width: 8px !important;
+  height: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.react-flow__resize-control:hover {
+  background: #3B82F6 !important;
+  transform: scale(1.2) !important;
+}
+
+.react-flow__resize-control.handle-se {
+  cursor: se-resize !important;
+}
+
+.react-flow__resize-control.handle-sw {
+  cursor: sw-resize !important;
+}
+
+.react-flow__resize-control.handle-ne {
+  cursor: ne-resize !important;
+}
+
+.react-flow__resize-control.handle-nw {
+  cursor: nw-resize !important;
+}
+
+/* --- End React Flow Resize Handles --- */
+
+
+/* --- React Flow NodeResizer Styling --- */
+.resize-line {
+  border: 1px solid #3B82F6 !important;
+  background: transparent !important;
+}
+
+.resize-handle {
+  width: 8px !important;
+  height: 8px !important;
+  background: #3B82F6 !important;
+  border: 2px solid white !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease !important;
+  z-index: 1000 !important;
+  position: absolute !important;
+}
+
+.resize-handle:hover {
+  background: #2563EB !important;
+  transform: scale(1.2) !important;
+}
+
+/* Ensure resize handles are visible on all node sizes */
+.react-flow__node-custom .resize-handle {
+  z-index: 1000 !important;
+  position: absolute !important;
+}
+
+/* Make resize handles more visible on smaller nodes */
+.react-flow__node-custom:hover .resize-handle {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* --- End React Flow NodeResizer Styling --- */
+
+
+/* --- Definitive Custom Node Styling --- */
+
+/* Base style for the custom node wrapper */
+.react-flow__node-custom {
+  border: 1px solid #E5E7EB !important; /* Lighter border */
+  border-radius: 8px !important;
+  background-color: white !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+  padding: 0 !important;
+  outline: none !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1) !important;
+}
+
+/* Hover state for the custom node */
+.react-flow__node-custom:hover {
+  border-color: #D1D5DB !important; /* Slightly darker gray on hover */
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06) !important;
+}
+
+/* Remove ALL selection outlines/shadows from React Flow */
+.react-flow__node-custom.selected,
+.react-flow__node-custom.selectable:focus,
+.react-flow__node-custom.selectable:focus-within {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Styling for the input field inside the node */
+.custom-node-input {
+  width: 100%;
+  height: 24px;
+  padding: 3px 6px;
+  font-size: var(--font-size-xs);
+  border-radius: 6px;
+  background: white;
+  color: #111827;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  border: 1px solid #D1D5DB !important;
+  background-color: #F9FAFB !important; /* Light background for input */
+}
+
+.custom-node-input:hover {
+  border-color: #3B82F6 !important;
+}
+
+.custom-node-input:focus {
+  outline: none !important;
+  border-color: #3B82F6 !important;
+  background-color: white !important; /* White background on focus */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Global input reset to prevent browser defaults */
+input {
+  outline: none;
+  box-shadow: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Single theme for testing - Light theme */
+[data-theme="light"] {
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F9FAFB;
+  --bg-sidebar: #F3F4F6;
+  --text-primary: #111827;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
+  --border-color: #E5E7EB;
+  --primary-color: #3B82F6;
+  --shadow-small: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-large: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Font Size Variables */
+[data-font-size="small"] {
+  --font-size-xs: 10px;
+  --font-size-sm: 11px;
+  --font-size-base: 12px;
+  --font-size-lg: 13px;
+  --font-size-xl: 14px;
+  --font-size-2xl: 16px;
+  --font-size-3xl: 18px;
+}
+
+[data-font-size="medium"] {
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-lg: 14px;
+  --font-size-xl: 16px;
+  --font-size-2xl: 18px;
+  --font-size-3xl: 20px;
+}
+
+[data-font-size="large"] {
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 22px;
+}
+
+/* --- Global Resets for buttons --- */
+button {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+/* Global button reset to prevent browser defaults */
+button, button:focus, button:active, button:hover {
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Global form element reset */
+select, select:focus, select:active, select:hover,
+textarea, textarea:focus, textarea:active, textarea:hover {
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  box-shadow: none !important;
+}
+
+/* Specific button styling for header and sidebar */
+header button,
+.sidebar button,
+.theme-selector button {
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+header button:focus,
+.sidebar button:focus,
+.theme-selector button:focus {
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+header button:active,
+.sidebar button:active,
+.theme-selector button:active {
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+header button:hover,
+.sidebar button:hover,
+.theme-selector button:hover {
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Custom button div elements (used in sidebar) */
+.custom-button,
+.custom-button:focus,
+.custom-button:active,
+.custom-button:hover {
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* React Flow specific button overrides */
+.react-flow__controls button,
+.react-flow__controls button:focus,
+.react-flow__controls button:active,
+.react-flow__controls button:hover {
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Additional specificity for all interactive elements */
+[role="button"],
+[role="button"]:focus,
+[role="button"]:active,
+[role="button"]:hover {
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Specific styling for header buttons */
+.app-header .header-button,
+.app-header .header-button:focus,
+.app-header .header-button:active,
+.app-header .header-button:hover {
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Specific styling for sidebar buttons */
+.app-sidebar .sidebar-tab-button,
+.app-sidebar .sidebar-tab-button:focus,
+.app-sidebar .sidebar-tab-button:active,
+.app-sidebar .sidebar-tab-button:hover,
+.app-sidebar .sidebar-node-button,
+.app-sidebar .sidebar-node-button:focus,
+.app-sidebar .sidebar-node-button:active,
+.app-sidebar .sidebar-node-button:hover {
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Specific styling for theme selector */
+.theme-selector .theme-selector-button,
+.theme-selector .theme-selector-button:focus,
+.theme-selector .theme-selector-button:active,
+.theme-selector .theme-selector-button:hover {
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.theme-selector .theme-option,
+.theme-selector .theme-option:focus,
+.theme-selector .theme-option:active,
+.theme-selector .theme-option:hover {
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Additional specificity for all div elements that act as buttons */
+div[role="button"],
+div[role="button"]:focus,
+div[role="button"]:active,
+div[role="button"]:hover {
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Most specific rules for custom node inputs */
+.custom-node-input,
+.custom-node-input:focus,
+.custom-node-input:active,
+.custom-node-input:hover,
+.custom-node-input:focus-visible,
+.custom-node-input:focus-within,
+input.custom-node-input,
+input.custom-node-input:focus,
+input.custom-node-input:active,
+input.custom-node-input:hover,
+input.custom-node-input:focus-visible,
+input.custom-node-input:focus-within,
+input[type="text"].custom-node-input,
+input[type="text"].custom-node-input:focus,
+input[type="text"].custom-node-input:active,
+input[type="text"].custom-node-input:hover,
+input[type="text"].custom-node-input:focus-visible,
+input[type="text"].custom-node-input:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  border: 1px solid #D1D5DB !important;
+  background: white !important;
+  color: #111827 !important;
+  border-style: solid !important;
+  border-width: 1px !important;
+}
+
+/* Focus states for custom node inputs */
+.custom-node-input:focus,
+input.custom-node-input:focus,
+input[type="text"].custom-node-input:focus,
+.custom-node-input:focus-visible,
+input.custom-node-input:focus-visible,
+input[type="text"].custom-node-input:focus-visible {
+  border: 1px solid #3B82F6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+  outline: none !important;
+}
+
+/* Hover states for custom node inputs */
+.custom-node-input:hover,
+input.custom-node-input:hover,
+input[type="text"].custom-node-input:hover {
+  border: 1px solid #3B82F6 !important;
+  outline: none !important;
+}
+
+/* Additional specificity for React Flow's internal styling */
+.react-flow__node.react-flow__node-custom .custom-node-input,
+.react-flow__node.react-flow__node-custom input.custom-node-input,
+.react-flow__node.react-flow__node-custom input[type="text"].custom-node-input {
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  border: 1px solid #D1D5DB !important;
+  border-style: solid !important;
+  border-width: 1px !important;
+}
+
+/* Additional aggressive rules to prevent browser defaults */
+.react-flow__node-custom *,
+.react-flow__node-custom *:focus,
+.react-flow__node-custom *:active,
+.react-flow__node-custom *:hover,
+.react-flow__node-custom *:focus-visible,
+.react-flow__node-custom *:focus-within {
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Override any React Flow default styling */
+.react-flow__node.react-flow__node-custom,
+.react-flow__node.react-flow__node-custom:focus,
+.react-flow__node.react-flow__node-custom:active,
+.react-flow__node.react-flow__node-custom:hover,
+.react-flow__node.react-flow__node-custom:focus-visible,
+.react-flow__node.react-flow__node-custom:focus-within {
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  box-shadow: none !important;
+  border: 2px solid #D1D5DB !important;
+  border-radius: 8px !important;
+  background: white !important;
+  transition: all 0.2s ease !important;
+}
+
+.react-flow__node.react-flow__node-custom:hover {
+  border: 2px solid #3B82F6 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+.react-flow__node.react-flow__node-custom:focus,
+.react-flow__node.react-flow__node-custom:focus-visible {
+  border: 2px solid #3B82F6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+} 

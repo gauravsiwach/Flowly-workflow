@@ -1,0 +1,356 @@
+import React, { useState, useCallback, useEffect } from 'react';
+import { Handle, Position, NodeResizer } from '@xyflow/react';
+import { useTheme } from '../contexts/ThemeContext';
+import { validateNodeInput, getValidationRules } from '../utils/validation';
+import { FileText, X, Eye, Copy, Check } from 'lucide-react';
+import ResultPopup from './ResultPopup';
+
+export default function CustomNode({ id, data, style, setNodes }) {
+  const { theme } = useTheme();
+  const [validationError, setValidationError] = useState(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [showResultPopup, setShowResultPopup] = useState(false);
+
+  const handleInputChange = (e) => {
+    e.stopPropagation(); // important to prevent drag instead of typing
+    const inputValue = e.target.value;
+    data.onChange?.(id, inputValue);
+    
+    // Clear validation error immediately when user starts typing
+    setValidationError(null);
+    
+    // Validate input in real-time
+    if (data.inputType && data.node_id) {
+      setIsValidating(true);
+      const validation = validateNodeInput(data.node_id, inputValue);
+      
+      // Show validation result after a small delay
+      setTimeout(() => {
+        setValidationError(validation.error);
+        setIsValidating(false);
+      }, 500);
+    }
+  };
+
+  // Validate on component mount and when data changes
+  useEffect(() => {
+    if (data.inputType && data.node_id && data.node_input) {
+      const validation = validateNodeInput(data.node_id, data.node_input);
+      setValidationError(validation.error);
+    } else if (data.validationError) {
+      // Handle validation errors passed from parent
+      setValidationError(data.validationError);
+    } else {
+      setValidationError(null);
+    }
+  }, [data.node_id, data.node_input, data.inputType, data.validationError]);
+
+  // Determine minimum sizes based on whether node has input
+  const hasInput = data.inputType !== undefined;
+  const minWidth = hasInput ? 220 : 160;   // Increased width to accommodate larger fonts
+  const minHeight = hasInput ? 120 : 80;   // Increased height to prevent border cutting
+
+  // Simplified styles, all border/outline logic is in CSS now
+  const nodeStyle = {
+    padding: 0, // All padding is handled by child elements now
+    width: '100%',
+    height: '100%',
+    background: theme.colors.node.background, // Apply theme background color
+    border: `1px solid ${theme.colors.node.border}`,
+    borderRadius: '6px',
+    boxShadow: theme.colors.node.shadow,
+    boxSizing: 'border-box', // This is crucial to include border in the total size
+    position: 'relative', // Ensure proper positioning for resize handles
+    overflow: 'hidden', // Changed to hidden to prevent content overflow
+    ...style, // Use the style prop from React Flow for resizing
+  };
+
+  const headerStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '3px 6px', // Reduced padding
+    borderBottom: `1px solid ${theme.colors.border}`,
+    background: theme.colors.surface,
+    borderTopLeftRadius: '4px',
+    borderTopRightRadius: '4px',
+    minHeight: '20px', // Reduced height
+  };
+
+  const headerLeftStyle = {
+    display: 'flex',
+    alignItems: 'center',
+  };
+
+  const deleteButtonStyle = {
+    width: '12px', // Reduced size
+    height: '12px', // Reduced size
+    background: theme.colors.button.secondary,
+    border: `1px solid ${theme.colors.border}`,
+    borderRadius: '50%',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '8px', // Reduced font size
+    fontWeight: 'bold',
+    color: theme.colors.text.primary,
+    transition: 'all 0.2s ease',
+    padding: 0,
+    outline: 'none',
+  };
+
+  const iconStyle = {
+    marginRight: '4px',
+    fontSize: 'var(--font-size-xs)',
+    color: theme.colors.text.secondary,
+  };
+  
+  const titleStyle = {
+    fontSize: '10px', // Reduced from var(--font-size-sm)
+    fontWeight: '500',
+    color: theme.colors.text.primary,
+  };
+  
+  const bodyStyle = {
+    padding: '3px 6px', // Further reduced padding
+    background: theme.colors.node.background,
+    minHeight: hasInput ? '45px' : '25px', // Reduced height for nodes without input
+  };
+
+  const labelStyle = {
+    fontSize: '9px',
+    color: theme.colors.text.secondary,
+    marginBottom: '1px', // Further reduced margin
+    lineHeight: '1.0',
+  };
+
+  const descStyle = {
+    fontSize: '8px', // Further reduced font size
+    color: theme.colors.text.muted,
+    marginTop: '1px', // Further reduced margin
+    marginBottom: '1px', // Further reduced margin
+    lineHeight: '1.0',
+    fontStyle: 'italic',
+  };
+
+  const resultBoxStyle = {
+    marginTop: '2px', // Reduced margin
+    padding: '3px 4px', // Reduced padding
+    fontSize: '9px', // Reduced from var(--font-size-xs)
+    borderRadius: '2px',
+    background: theme.colors.surface,
+    color: theme.colors.text.primary,
+    border: `1px solid ${theme.colors.border}`,
+    wordWrap: 'break-word',
+    lineHeight: '1.0',
+  };
+
+  const errorStyle = {
+    marginTop: '2px', // Reduced margin
+    padding: '2px 4px', // Reduced padding
+    fontSize: '9px', // Reduced from var(--font-size-xs)
+    borderRadius: '2px',
+    background: '#FEE2E2',
+    color: '#DC2626',
+    border: '1px solid #FCA5A5',
+    wordWrap: 'break-word',
+    lineHeight: '1.0',
+  };
+
+  const inputStyle = {
+    width: '100%',
+    height: '20px', // Reduced height
+    padding: '2px 4px', // Reduced padding
+    fontSize: '9px', // Reduced from var(--font-size-xs)
+    borderRadius: '2px',
+    background: isValidating 
+      ? '#FEF3C7'
+      : validationError 
+        ? '#FEF2F2'
+        : theme.colors.surface,
+    color: theme.colors.text.primary,
+    transition: 'all 0.2s ease',
+    boxSizing: 'border-box',
+    border: isValidating
+      ? '1px solid #F59E0B'
+      : validationError 
+        ? '1px solid #FCA5A5'
+        : `1px solid ${theme.colors.border}`,
+    outline: 'none',
+  };
+
+  const validationIndicatorStyle = {
+    width: '8px',
+    height: '8px',
+    borderRadius: '50%',
+    background: data.inputType && data.node_input 
+      ? (isValidating 
+          ? '#F59E0B' // Orange for validating
+          : validationError 
+            ? '#EF4444' // Red for invalid
+            : '#10B981') // Green for valid
+      : 'transparent',
+    border: data.inputType && data.node_input 
+      ? `1px solid ${theme.colors.node.background}` // Use theme background for border
+      : 'none',
+    marginRight: '4px',
+    transition: 'background-color 0.2s ease',
+  };
+
+  const resultIndicatorStyle = {
+    width: '12px',
+    height: '12px',
+    borderRadius: '50%',
+    background: data.node_result ? '#10B981' : 'transparent',
+    border: data.node_result ? `1px solid ${theme.colors.node.background}` : 'none',
+    marginRight: '4px',
+    cursor: data.node_result ? 'pointer' : 'default',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s ease',
+  };
+
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    if (data.onDelete) {
+      data.onDelete(id);
+    }
+  };
+
+  const handleResultClick = (e) => {
+    e.stopPropagation();
+    setShowResultPopup(true);
+  };
+
+  const handleClosePopup = () => {
+    setShowResultPopup(false);
+  };
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <NodeResizer 
+        key={`resizer-${id}-${minWidth}-${minHeight}`}
+        minWidth={minWidth} 
+        minHeight={minHeight}
+        isVisible={true}
+        lineClassName="resize-line"
+        handleClassName="resize-handle"
+        onResizeStart={(event, params) => {
+          // Prevent any interference with content
+        }}
+        onResize={(event, params) => {
+          // Handle resize if needed
+        }}
+        onResizeEnd={(event, params) => {
+          // Ensure final size is correct
+        }}
+        keepAspectRatio={false}
+        shouldResize={(event, params) => {
+          return true; // Allow all resize operations
+        }}
+      />
+      <div style={{ ...nodeStyle, position: 'relative' }}>
+        <div style={headerStyle}>
+          <div style={headerLeftStyle}>
+            <FileText size={10} style={{ marginRight: '3px', color: theme.colors.text.secondary }} />
+            {data.inputType && <div style={validationIndicatorStyle} />}
+            <div style={titleStyle}>
+              {data.title.replace(/_/g, ' ')}
+            </div>
+          </div>
+          <button 
+            className="node-delete-button"
+            style={deleteButtonStyle} 
+            onClick={handleDeleteClick}
+            onMouseEnter={(e) => {
+              e.target.style.background = theme.colors.button.hover;
+              e.target.style.borderColor = theme.colors.primary;
+              e.target.style.color = '#FFFFFF';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = theme.colors.button.secondary;
+              e.target.style.borderColor = theme.colors.border;
+              e.target.style.color = theme.colors.text.primary;
+            }}
+          >
+            <X size={6} style={{ color: 'currentColor' }} />
+          </button>
+        </div>
+        <div style={bodyStyle}>
+          {data.label && (
+            <div style={labelStyle}>
+          {data.label}
+        </div>
+          )}
+          {data.inputType && (
+        <input
+              type={data.inputType}
+              className="custom-node-input"
+              placeholder={getValidationRules(data.node_id)}
+              value={data.node_input || ''}
+          onChange={handleInputChange}
+          onClick={(e) => e.stopPropagation()}
+          onDoubleClick={(e) => e.stopPropagation()}
+              style={inputStyle}
+            />
+          )}
+
+          {data.description && (
+            <div style={descStyle}>
+              {data.description}
+            </div>
+          )}
+
+          {console.log('CustomNode node_result:', data.node_result)}
+
+          {data.node_result && (
+            <div style={resultBoxStyle} title={typeof data.node_result === 'string' ? data.node_result : ''}>
+              {typeof data.node_result === 'string' ? data.node_result.slice(0, 100).split('\n')[0] : ''}
+              {typeof data.node_result === 'string' && data.node_result.length > 100 ? '...' : ''}
+            </div>
+          )}
+
+          {data.node_result && (
+            <div 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                marginTop: '2px',
+                padding: '2px 4px',
+                background: theme.colors.surface,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '9px',
+                color: theme.colors.text.secondary,
+              }}
+              onClick={handleResultClick}
+              title="Click to view result"
+            >
+              <Eye size={8} style={{ color: theme.colors.text.secondary }} />
+              <span>View Result</span>
+            </div>
+          )}
+
+          {validationError && (
+            <div style={errorStyle}>
+              {validationError}
+            </div>
+          )}
+        </div>
+
+        {/* Result Popup */}
+        <ResultPopup
+          isOpen={showResultPopup}
+          onClose={handleClosePopup}
+          title={data.title.replace(/_/g, ' ')}
+          result={data.node_result}
+          nodeId={id}
+        />
+      </div>
+    </div>
+  );
+}
