@@ -12,6 +12,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import CustomNode from './CustomNode';
 import DeletableNode from './DeletableNode';
+import ResultPanel from './ResultPanel';
 import { useTheme } from '../contexts/ThemeContext';
 
 // Move ID counter outside component to prevent reset on re-renders
@@ -21,7 +22,24 @@ const getId = () => `node_${globalId++}`;
 const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode }) => {
   const reactFlowInstance = useReactFlow();
   const nodeCountRef = useRef(0);
+  const nodesRef = useRef(nodes);
   const { theme, gridOpacity } = useTheme();
+  const [selectedNode, setSelectedNode] = useState(null);
+  
+  // Update ref when nodes change
+  nodesRef.current = nodes;
+  
+  const handleShowResult = useCallback((nodeId) => {
+    // Find the node by ID using ref to avoid dependency
+    const nodeWithResult = nodesRef.current.find(node => node.id === nodeId);
+    if (nodeWithResult) {
+      setSelectedNode(nodeWithResult);
+    }
+  }, []); // No dependencies to avoid recreation
+
+  const handleCloseResultPanel = useCallback(() => {
+    setSelectedNode(null);
+  }, []);
   
   // Memoize nodeTypes to prevent React Flow warning
   const nodeTypes = useMemo(() => {
@@ -30,7 +48,7 @@ const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode })
        // console.log('Wrapper called with props:', props.id, 'setNodes available:', !!setNodes);
         return (
           <DeletableNode {...props}>
-            <NodeComponent {...props} setNodes={setNodes} />
+            <NodeComponent {...props} setNodes={setNodes} onShowResult={handleShowResult} />
           </DeletableNode>
         );
       };
@@ -42,7 +60,7 @@ const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode })
       input: withDeletable(({ data }) => <div>{data.label}</div>),
       output: withDeletable(({ data }) => <div>{data.label}</div>),
     };
-  }, [setNodes]);
+  }, [setNodes, handleShowResult]);
 
   // Theme-based styling for React Flow
   const reactFlowStyle = {
@@ -72,12 +90,12 @@ const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode })
       nds.map((node) =>
         node.id === id
           ? {
-            ...node,
-            data: {
-              ...node.data,
+              ...node,
+              data: {
+                ...node.data,
                 node_input: inputValue,
-            },
-          }
+              },
+            }
           : node
       )
     );
@@ -158,6 +176,7 @@ const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode })
       flex: 1, 
       height: '100%',
       backgroundColor: theme.colors.flow.background,
+      position: 'relative',
     }}>
       <ReactFlow
         nodeTypes={nodeTypes}
@@ -177,6 +196,8 @@ const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode })
         attributionPosition="bottom-left"
         style={{
           backgroundColor: theme.colors.flow.background,
+          width: selectedNode ? 'calc(100% - 400px)' : '100%',
+          transition: 'width 0.3s ease',
         }}
         defaultEdgeOptions={{
           style: { stroke: theme.colors.flow.edge, strokeWidth: 2 },
@@ -211,6 +232,12 @@ const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode })
           maskColor={theme.colors.flow.pattern}
         />
       </ReactFlow>
+      {selectedNode && (
+        <ResultPanel
+          selectedNode={selectedNode}
+          onClose={handleCloseResultPanel}
+        />
+      )}
     </div>
   );
 };

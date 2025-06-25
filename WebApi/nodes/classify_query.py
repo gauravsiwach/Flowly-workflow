@@ -1,7 +1,10 @@
 from pydantic import BaseModel
 from typing import Literal
 from openai import OpenAI
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 client = OpenAI()
 
 class classifyMessageResponse(BaseModel):

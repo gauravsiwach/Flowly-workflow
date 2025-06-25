@@ -29,7 +29,7 @@ function AppContent() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ graph_flowData: graphData }),
+        body: JSON.stringify(graphData),
       });
 
       const data = await res.json();
@@ -54,13 +54,6 @@ function AppContent() {
     const validationSummary = getValidationSummary(validationResults);
 
     if (!validationResults.isValid) {
-      // Show validation errors
-      //toast.error(validationSummary.message);
-      
-      // Show detailed errors in console for debugging
-      //console.log('Validation Errors:', validationResults.errors);
-      
-      // Update nodes to show validation errors
       setNodes(currentNodes => {
         return currentNodes.map(node => {
           const nodeError = validationResults.nodeErrors[node.id];
@@ -76,17 +69,11 @@ function AppContent() {
           return node;
         });
       });
-
-      return; // Stop execution if validation fails
+      return;
     }
-
-    // If validation passes, proceed with execution
-    //toast.success(validationSummary.message);
-    //console.log('✅ All nodes validated successfully');
 
     let executionList = [];
 
-    // If there are edges, use the existing logic to create a sequence
     if (edges.length > 0) {
       const sequence = edges.map((edge) => {
         const sourceNode = nodes.find((n) => n.id === edge.source);
@@ -95,7 +82,6 @@ function AppContent() {
       });
       executionList = getOrderedNodeListWithSeq(sequence);
     } else {
-      // If no edges, execute all nodes individually
       executionList = nodes.map((node, index) => ({
         node_id: node.data.node_id,
         seq: index + 1,
@@ -110,17 +96,30 @@ function AppContent() {
       return;
     }
 
-    console.log('Final Execution List:', executionList);
-    //toast.info("🚀 Executing workflow...");
+    // Build additional_input array for backend
+    const additional_input = nodes.map(node => ({
+      node_id: node.data.node_id,
+      node_input: node.data.node_input
+    }));
 
-    const apiResults = await sendGraphData(executionList);
+    // Send both graph_flowData and additional_input in the payload
+    const apiResults = await sendGraphData({
+      graph_flowData: executionList,
+      additional_input
+    });
     let resultsArray = apiResults;
+    let additionalInputArray = [];
     if (apiResults && apiResults.result) {
-      resultsArray = apiResults.result;
+      if (apiResults.result.results) {
+        resultsArray = apiResults.result.results;
+        additionalInputArray = apiResults.result.additional_input || [];
+      } else {
+        resultsArray = apiResults.result;
+      }
     }
+    
     if (resultsArray) {
       if (typeof resultsArray === 'string') {
-        // Try to split and parse if backend returns concatenated JSON objects
         resultsArray = resultsArray
           .split(/}\s*{/)
           .map((chunk, idx, arr) => {
@@ -131,20 +130,19 @@ function AppContent() {
           });
       }
       if (!Array.isArray(resultsArray)) resultsArray = [resultsArray];
-      setNodes(currentNodes =>
+            setNodes(currentNodes =>
         currentNodes.map(node => {
-          const found = resultsArray.find(r => r.node_id === node.data.node_id);
-          if (found) {
-            return {
-              ...node,
-              data: {
-                ...node.data,
-                node_result: found.node_result,
-                node_input: found.node_input,
-              },
-            };
-          }
-          return node;
+          const resultObj = resultsArray.find(r => r.node_id === node.data.node_id);
+          const inputObj = additionalInputArray.find(ai => ai.node_id === node.data.node_id);
+
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              node_result: resultObj ? resultObj.node_result : node.data.node_result,
+              node_input: inputObj ? inputObj.node_input : node.data.node_input,
+            },
+          };
         })
       );
     }

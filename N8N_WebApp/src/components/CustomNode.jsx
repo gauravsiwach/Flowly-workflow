@@ -2,29 +2,21 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Handle, Position, NodeResizer } from '@xyflow/react';
 import { useTheme } from '../contexts/ThemeContext';
 import { validateNodeInput, getValidationRules } from '../utils/validation';
-import { FileText, X, Eye, Copy, Check } from 'lucide-react';
-import ResultPopup from './ResultPopup';
+import { FileText, X, Eye } from 'lucide-react';
 
-export default function CustomNode({ id, data, style, setNodes }) {
+export default function CustomNode({ id, data, style, setNodes, onShowResult }) {
   const { theme } = useTheme();
   const [validationError, setValidationError] = useState(null);
   const [isValidating, setIsValidating] = useState(false);
-  const [showResultPopup, setShowResultPopup] = useState(false);
 
   const handleInputChange = (e) => {
     e.stopPropagation(); // important to prevent drag instead of typing
     const inputValue = e.target.value;
     data.onChange?.(id, inputValue);
-    
-    // Clear validation error immediately when user starts typing
     setValidationError(null);
-    
-    // Validate input in real-time
     if (data.inputType && data.node_id) {
       setIsValidating(true);
       const validation = validateNodeInput(data.node_id, inputValue);
-      
-      // Show validation result after a small delay
       setTimeout(() => {
         setValidationError(validation.error);
         setIsValidating(false);
@@ -32,13 +24,11 @@ export default function CustomNode({ id, data, style, setNodes }) {
     }
   };
 
-  // Validate on component mount and when data changes
   useEffect(() => {
     if (data.inputType && data.node_id && data.node_input) {
       const validation = validateNodeInput(data.node_id, data.node_input);
       setValidationError(validation.error);
     } else if (data.validationError) {
-      // Handle validation errors passed from parent
       setValidationError(data.validationError);
     } else {
       setValidationError(null);
@@ -62,6 +52,8 @@ export default function CustomNode({ id, data, style, setNodes }) {
     boxSizing: 'border-box', // This is crucial to include border in the total size
     position: 'relative', // Ensure proper positioning for resize handles
     overflow: 'hidden', // Changed to hidden to prevent content overflow
+    display: 'flex',
+    flexDirection: 'column',
     ...style, // Use the style prop from React Flow for resizing
   };
 
@@ -116,6 +108,33 @@ export default function CustomNode({ id, data, style, setNodes }) {
     padding: '3px 6px', // Further reduced padding
     background: theme.colors.node.background,
     minHeight: hasInput ? '45px' : '25px', // Reduced height for nodes without input
+    flex: 1, // Take remaining space
+    display: 'flex',
+    flexDirection: 'column',
+  };
+
+  const footerStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    padding: '4px 6px',
+    borderTop: `1px solid ${theme.colors.border}`,
+    background: theme.colors.surface,
+    borderBottomLeftRadius: '4px',
+    borderBottomRightRadius: '4px',
+    minHeight: '20px',
+  };
+
+  const resultLabelStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    fontSize: '8px',
+    color: data.node_result ? theme.colors.text.primary : theme.colors.text.secondary,
+    cursor: data.node_result ? 'pointer' : 'default',
+    fontWeight: '500',
+    transition: 'all 0.2s ease',
+    opacity: data.node_result ? 1 : 0.6,
   };
 
   const labelStyle = {
@@ -132,18 +151,6 @@ export default function CustomNode({ id, data, style, setNodes }) {
     marginBottom: '1px', // Further reduced margin
     lineHeight: '1.0',
     fontStyle: 'italic',
-  };
-
-  const resultBoxStyle = {
-    marginTop: '2px', // Reduced margin
-    padding: '3px 4px', // Reduced padding
-    fontSize: '9px', // Reduced from var(--font-size-xs)
-    borderRadius: '2px',
-    background: theme.colors.surface,
-    color: theme.colors.text.primary,
-    border: `1px solid ${theme.colors.border}`,
-    wordWrap: 'break-word',
-    lineHeight: '1.0',
   };
 
   const errorStyle = {
@@ -198,20 +205,6 @@ export default function CustomNode({ id, data, style, setNodes }) {
     transition: 'background-color 0.2s ease',
   };
 
-  const resultIndicatorStyle = {
-    width: '12px',
-    height: '12px',
-    borderRadius: '50%',
-    background: data.node_result ? '#10B981' : 'transparent',
-    border: data.node_result ? `1px solid ${theme.colors.node.background}` : 'none',
-    marginRight: '4px',
-    cursor: data.node_result ? 'pointer' : 'default',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.2s ease',
-  };
-
   const handleDeleteClick = (e) => {
     e.stopPropagation();
     if (data.onDelete) {
@@ -221,11 +214,7 @@ export default function CustomNode({ id, data, style, setNodes }) {
 
   const handleResultClick = (e) => {
     e.stopPropagation();
-    setShowResultPopup(true);
-  };
-
-  const handleClosePopup = () => {
-    setShowResultPopup(false);
+    onShowResult(id);
   };
 
   return (
@@ -290,9 +279,9 @@ export default function CustomNode({ id, data, style, setNodes }) {
               className="custom-node-input"
               placeholder={getValidationRules(data.node_id)}
               value={data.node_input || ''}
-          onChange={handleInputChange}
-          onClick={(e) => e.stopPropagation()}
-          onDoubleClick={(e) => e.stopPropagation()}
+              onChange={handleInputChange}
+              onClick={(e) => e.stopPropagation()}
+              onDoubleClick={(e) => e.stopPropagation()}
               style={inputStyle}
             />
           )}
@@ -303,53 +292,20 @@ export default function CustomNode({ id, data, style, setNodes }) {
             </div>
           )}
 
-          {console.log('CustomNode node_result:', data.node_result)}
-
-          {data.node_result && (
-            <div style={resultBoxStyle} title={typeof data.node_result === 'string' ? data.node_result : ''}>
-              {typeof data.node_result === 'string' ? data.node_result.slice(0, 100).split('\n')[0] : ''}
-              {typeof data.node_result === 'string' && data.node_result.length > 100 ? '...' : ''}
-            </div>
-          )}
-
-          {data.node_result && (
-            <div 
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                marginTop: '2px',
-                padding: '2px 4px',
-                background: theme.colors.surface,
-                border: `1px solid ${theme.colors.border}`,
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '9px',
-                color: theme.colors.text.secondary,
-              }}
-              onClick={handleResultClick}
-              title="Click to view result"
-            >
-              <Eye size={8} style={{ color: theme.colors.text.secondary }} />
-              <span>View Result</span>
-            </div>
-          )}
-
           {validationError && (
             <div style={errorStyle}>
               {validationError}
             </div>
           )}
         </div>
-
-        {/* Result Popup */}
-        <ResultPopup
-          isOpen={showResultPopup}
-          onClose={handleClosePopup}
-          title={data.title.replace(/_/g, ' ')}
-          result={data.node_result}
-          nodeId={id}
-        />
+        
+        {/* Footer with Result Button */}
+        <div style={footerStyle}>
+          <div style={resultLabelStyle} onClick={handleResultClick}>
+            <span style={{ marginTop: '-3px' }}>Result</span>
+            <Eye size={10} style={{ color: 'currentColor' }} />
+          </div>
+        </div>
       </div>
     </div>
   );
