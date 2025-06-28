@@ -1,3 +1,4 @@
+import json
 import requests
 from bs4 import BeautifulSoup
 
@@ -15,7 +16,6 @@ def fetch_html_content(state: dict) -> dict:
         soup = BeautifulSoup(response.text, "html.parser")
         text = soup.get_text(separator="\n", strip=True)
         state["node_result"] = text
-        print("state-->", state)
     except Exception as e:
         print(f"❌ Error fetching HTML: {e}")
         state["node_result"] = "Error fetching the content."

@@ -179,10 +179,10 @@ export default function ResultPanel({
               <div style={infoValueStyle}>{nodeData.description}</div>
             </>
           )}
-          {nodeData.node_input && (
+          {nodeData.additional_input?.[nodeData.title] && (
             <>
               <div style={infoLabelStyle}>Input</div>
-              <div style={infoValueStyle}>{nodeData.node_input}</div>
+              <div style={infoValueStyle}>{nodeData.additional_input[nodeData.title]}</div>
             </>
           )}
         </div>

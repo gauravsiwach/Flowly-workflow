@@ -280,4 +280,15 @@
 /* Override any browser default colors */
 .react-flow__viewport {
   background-color: inherit !important;
+  outline: none;
+}
+
+/* Spinner Animation for Loader */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

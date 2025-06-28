@@ -144,7 +144,7 @@ export const validateAllNodes = (nodes) => {
     const nodeId = node.id;
     const nodeData = node.data;
     const nodeType = nodeData.node_id;
-    const inputValue = nodeData.node_input || '';
+    const inputValue = nodeData.additional_input?.[nodeData.title] || '';
 
     // Only validate nodes that have input fields
     if (nodeData.inputType) {

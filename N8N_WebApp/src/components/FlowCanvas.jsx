@@ -19,7 +19,7 @@ import { useTheme } from '../contexts/ThemeContext';
 let globalId = 0;
 const getId = () => `node_${globalId++}`;
 
-const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode }) => {
+const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode, isExecuting }) => {
   const reactFlowInstance = useReactFlow();
   const nodeCountRef = useRef(0);
   const nodesRef = useRef(nodes);
@@ -45,10 +45,10 @@ const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode })
   const nodeTypes = useMemo(() => {
     const withDeletable = (NodeComponent) => {
       return (props) => {
-       // console.log('Wrapper called with props:', props.id, 'setNodes available:', !!setNodes);
+        console.log('FlowCanvas nodeTypes wrapper:', { nodeId: props.id, isExecuting });
         return (
           <DeletableNode {...props}>
-            <NodeComponent {...props} setNodes={setNodes} onShowResult={handleShowResult} />
+            <NodeComponent {...props} setNodes={setNodes} onShowResult={handleShowResult} isExecuting={isExecuting} />
           </DeletableNode>
         );
       };
@@ -60,7 +60,7 @@ const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode })
       input: withDeletable(({ data }) => <div>{data.label}</div>),
       output: withDeletable(({ data }) => <div>{data.label}</div>),
     };
-  }, [setNodes, handleShowResult]);
+  }, [setNodes, handleShowResult, isExecuting]);
 
   // Theme-based styling for React Flow
   const reactFlowStyle = {
@@ -93,7 +93,10 @@ const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode })
               ...node,
               data: {
                 ...node.data,
-                node_input: inputValue,
+                additional_input: {
+                  ...node.data.additional_input,
+                  [node.data.title]: inputValue
+                }
               },
             }
           : node
@@ -138,7 +141,7 @@ const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode })
         inputType: newNode.inputType,
         onChange: handleNodeInputChange,
         onDelete: onDeleteNode,
-        node_input: '',
+        additional_input: {},
         node_result: null,
       },
     };

@@ -8,6 +8,7 @@ class State(TypedDict):
     node_result: str
     node_id: str
     node_name: str
+    additional_input: list
 
 def execute_graph_flow(workflow_input, additional_input=None):
     state = {
@@ -56,7 +57,7 @@ def execute_graph_flow_stream(workflow_input, additional_input=None):
         event["node_id"] = step["node_id"]
         event["node_name"] = step.get("node_name", "")
         results.append(event)
-    print("✅ All states:", results)
+    # print("✅ All states:", results)
     return {"results": results, "additional_input": state["additional_input"]}
 
 

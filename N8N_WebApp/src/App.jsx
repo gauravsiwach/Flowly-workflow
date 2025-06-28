@@ -16,6 +16,7 @@ function AppContent() {
   const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { theme } = useTheme();
+  const [isExecuting, setIsExecuting] = useState(false);
 
   const handleAddNode = useCallback((nodeData) => {
     setNewNode(nodeData);
@@ -24,7 +25,7 @@ function AppContent() {
 
   const sendGraphData = async (graphData) => {
     try {
-      const res = await fetch('http://localhost:9000/run-graph', {
+      const res = await fetch('http://localhost:8000/run-graph', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,103 +49,116 @@ function AppContent() {
       toast.warning("⚠️ No nodes to validate");
       return;
     }
+    console.log('handleValidateFlow: Starting execution, setting isExecuting to true');
+    setIsExecuting(true);
+    try {
+      // First, validate all nodes
+      const validationResults = validateAllNodes(nodes);
+      const validationSummary = getValidationSummary(validationResults);
 
-    // First, validate all nodes
-    const validationResults = validateAllNodes(nodes);
-    const validationSummary = getValidationSummary(validationResults);
+      if (!validationResults.isValid) {
+        setNodes(currentNodes => {
+          return currentNodes.map(node => {
+            const nodeError = validationResults.nodeErrors[node.id];
+            if (nodeError) {
+              return {
+                ...node,
+                data: {
+                  ...node.data,
+                  validationError: nodeError
+                }
+              };
+            }
+            return node;
+          });
+        });
+        return;
+      }
 
-    if (!validationResults.isValid) {
-      setNodes(currentNodes => {
-        return currentNodes.map(node => {
-          const nodeError = validationResults.nodeErrors[node.id];
-          if (nodeError) {
+      let executionList = [];
+
+      if (edges.length > 0) {
+        const sequence = edges.map((edge) => {
+          const sourceNode = nodes.find((n) => n.id === edge.source);
+          const targetNode = nodes.find((n) => n.id === edge.target);
+          return { from: sourceNode.data, to: targetNode.data };
+        });
+        executionList = getOrderedNodeListWithSeq(sequence);
+      } else {
+        executionList = nodes.map((node, index) => ({
+          node_id: node.data.node_id,
+          seq: index + 1,
+          node_input: node.data.additional_input?.[node.data.title] || undefined,
+          node_name: node.data.title,
+          node_result: "",
+        }));
+      }
+
+      if (executionList.length === 0 && nodes.length > 0) {
+        toast.warning("⚠️ No valid execution list generated");
+        return;
+      }
+
+      // Build additional_input array for backend
+      const additional_input = nodes.map(node => ({
+        node_id: node.data.node_id,
+        node_input: node.data.additional_input?.[node.data.title] || ''
+      }));
+
+      console.log('handleValidateFlow: Sending API request');
+      // Send both graph_flowData and additional_input in the payload
+      const apiResults = await sendGraphData({
+        graph_flowData: executionList,
+        additional_input
+      });
+      console.log('handleValidateFlow: API response received');
+      let resultsArray = apiResults;
+      let additionalInputArray = [];
+      if (apiResults && apiResults.result) {
+        if (apiResults.result.results) {
+          resultsArray = apiResults.result.results;
+          additionalInputArray = apiResults.result.additional_input || [];
+        } else {
+          resultsArray = apiResults.result;
+        }
+      }
+      
+      if (resultsArray) {
+        if (typeof resultsArray === 'string') {
+          resultsArray = resultsArray
+            .split(/}\s*{/) // split on }{
+            .map((chunk, idx, arr) => {
+              if (arr.length === 1) return JSON.parse(chunk);
+              if (idx === 0) return JSON.parse(chunk + '}');
+              if (idx === arr.length - 1) return JSON.parse('{' + chunk);
+              return JSON.parse('{' + chunk + '}');
+            });
+        }
+        if (!Array.isArray(resultsArray)) resultsArray = [resultsArray];
+        setNodes(currentNodes =>
+          currentNodes.map(node => {
+            // Find result for this node
+            const resultObj = resultsArray.find(r => r.node_id === node.data.node_id);
+            // Find input for this node from additional_input
+            const inputObj = additionalInputArray.find(ai => ai.node_id === node.data.node_id);
+
             return {
               ...node,
               data: {
                 ...node.data,
-                validationError: nodeError
-              }
+                node_result: resultObj ? resultObj.node_result : node.data.node_result,
+                additional_input: {
+                  ...node.data.additional_input,
+                  [node.data.title]: inputObj ? inputObj.node_input : (node.data.additional_input?.[node.data.title] || '')
+                },
+              },
             };
-          }
-          return node;
-        });
-      });
-      return;
-    }
-
-    let executionList = [];
-
-    if (edges.length > 0) {
-      const sequence = edges.map((edge) => {
-        const sourceNode = nodes.find((n) => n.id === edge.source);
-        const targetNode = nodes.find((n) => n.id === edge.target);
-        return { from: sourceNode.data, to: targetNode.data };
-      });
-      executionList = getOrderedNodeListWithSeq(sequence);
-    } else {
-      executionList = nodes.map((node, index) => ({
-        node_id: node.data.node_id,
-        seq: index + 1,
-        node_input: node.data.node_input || undefined,
-        node_name: node.data.title,
-        node_result: "",
-      }));
-    }
-
-    if (executionList.length === 0 && nodes.length > 0) {
-      toast.warning("⚠️ No valid execution list generated");
-      return;
-    }
-
-    // Build additional_input array for backend
-    const additional_input = nodes.map(node => ({
-      node_id: node.data.node_id,
-      node_input: node.data.node_input
-    }));
-
-    // Send both graph_flowData and additional_input in the payload
-    const apiResults = await sendGraphData({
-      graph_flowData: executionList,
-      additional_input
-    });
-    let resultsArray = apiResults;
-    let additionalInputArray = [];
-    if (apiResults && apiResults.result) {
-      if (apiResults.result.results) {
-        resultsArray = apiResults.result.results;
-        additionalInputArray = apiResults.result.additional_input || [];
-      } else {
-        resultsArray = apiResults.result;
+          })
+        );
       }
-    }
-    
-    if (resultsArray) {
-      if (typeof resultsArray === 'string') {
-        resultsArray = resultsArray
-          .split(/}\s*{/)
-          .map((chunk, idx, arr) => {
-            if (arr.length === 1) return JSON.parse(chunk);
-            if (idx === 0) return JSON.parse(chunk + '}');
-            if (idx === arr.length - 1) return JSON.parse('{' + chunk);
-            return JSON.parse('{' + chunk + '}');
-          });
-      }
-      if (!Array.isArray(resultsArray)) resultsArray = [resultsArray];
-            setNodes(currentNodes =>
-        currentNodes.map(node => {
-          const resultObj = resultsArray.find(r => r.node_id === node.data.node_id);
-          const inputObj = additionalInputArray.find(ai => ai.node_id === node.data.node_id);
-
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              node_result: resultObj ? resultObj.node_result : node.data.node_result,
-              node_input: inputObj ? inputObj.node_input : node.data.node_input,
-            },
-          };
-        })
-      );
+    } finally {
+      console.log('handleValidateFlow: Execution complete, setting isExecuting to false');
+      setIsExecuting(false);
     }
   }, [nodes, edges]);
 
@@ -253,7 +267,7 @@ function AppContent() {
       orderedNodes.push({
         node_id: node.node_id,
         seq,
-        node_input: node.node_input || undefined,
+        node_input: node.additional_input?.[node.title] || undefined,
         node_name: node.title.replace(/ /g, '_'),
         node_result: "",
       });
@@ -300,6 +314,7 @@ function AppContent() {
             setEdges={setEdges}
             newNode={newNode}
             onDeleteNode={handleDeleteNode}
+            isExecuting={isExecuting}
           />
         </div>
       </div>

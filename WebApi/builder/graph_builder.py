@@ -5,6 +5,9 @@ from mapping.node_mapping import function_map, node_functions
 class State(TypedDict):
     node_input: str
     node_result: str
+    node_id: str
+    node_name: str
+    additional_input: list
 
 def build_graph_from_user_input(user_input_steps: list[dict]) -> StateGraph:
     graph_builder = StateGraph(State)

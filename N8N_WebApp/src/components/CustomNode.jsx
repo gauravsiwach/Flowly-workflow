@@ -2,12 +2,15 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Handle, Position, NodeResizer } from '@xyflow/react';
 import { useTheme } from '../contexts/ThemeContext';
 import { validateNodeInput, getValidationRules } from '../utils/validation';
-import { FileText, X, Eye } from 'lucide-react';
+import { FileText, X, Eye, Loader2 } from 'lucide-react';
 
-export default function CustomNode({ id, data, style, setNodes, onShowResult }) {
+export default function CustomNode({ id, data, style, setNodes, onShowResult, isExecuting }) {
   const { theme } = useTheme();
   const [validationError, setValidationError] = useState(null);
   const [isValidating, setIsValidating] = useState(false);
+
+  // Debug logging
+  console.log('CustomNode render:', { id, isExecuting, hasResult: !!data.node_result });
 
   const handleInputChange = (e) => {
     e.stopPropagation(); // important to prevent drag instead of typing
@@ -25,15 +28,16 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult }) 
   };
 
   useEffect(() => {
-    if (data.inputType && data.node_id && data.node_input) {
-      const validation = validateNodeInput(data.node_id, data.node_input);
+    const currentInput = data.additional_input?.[data.title] || '';
+    if (data.inputType && data.node_id && currentInput) {
+      const validation = validateNodeInput(data.node_id, currentInput);
       setValidationError(validation.error);
     } else if (data.validationError) {
       setValidationError(data.validationError);
     } else {
       setValidationError(null);
     }
-  }, [data.node_id, data.node_input, data.inputType, data.validationError]);
+  }, [data.node_id, data.additional_input, data.title, data.inputType, data.validationError]);
 
   // Determine minimum sizes based on whether node has input
   const hasInput = data.inputType !== undefined;
@@ -191,14 +195,14 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult }) 
     width: '8px',
     height: '8px',
     borderRadius: '50%',
-    background: data.inputType && data.node_input 
+    background: data.inputType && data.additional_input?.[data.title]
       ? (isValidating 
           ? '#F59E0B' // Orange for validating
           : validationError 
             ? '#EF4444' // Red for invalid
             : '#10B981') // Green for valid
       : 'transparent',
-    border: data.inputType && data.node_input 
+    border: data.inputType && data.additional_input?.[data.title]
       ? `1px solid ${theme.colors.node.background}` // Use theme background for border
       : 'none',
     marginRight: '4px',
@@ -248,6 +252,9 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult }) 
             <div style={titleStyle}>
               {data.title.replace(/_/g, ' ')}
             </div>
+            {isExecuting && (
+              <Loader2 size={14} color={theme.colors.primary} className="spin" style={{ marginLeft: 6 }} />
+            )}
           </div>
           <button 
             className="node-delete-button"
@@ -278,7 +285,7 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult }) 
               type={data.inputType}
               className="custom-node-input"
               placeholder={getValidationRules(data.node_id)}
-              value={data.node_input || ''}
+              value={data.additional_input?.[data.title] || ''}
               onChange={handleInputChange}
               onClick={(e) => e.stopPropagation()}
               onDoubleClick={(e) => e.stopPropagation()}
