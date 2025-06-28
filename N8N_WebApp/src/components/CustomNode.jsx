@@ -244,6 +244,33 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult, is
           return true; // Allow all resize operations
         }}
       />
+      
+      {/* Source Handle (Right side) */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="right"
+        style={{
+          background: theme.colors.primary,
+          width: '8px',
+          height: '8px',
+          border: `2px solid ${theme.colors.surface}`,
+        }}
+      />
+      
+      {/* Target Handle (Left side) */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="left"
+        style={{
+          background: theme.colors.primary,
+          width: '8px',
+          height: '8px',
+          border: `2px solid ${theme.colors.surface}`,
+        }}
+      />
+      
       <div style={{ ...nodeStyle, position: 'relative' }}>
         <div style={headerStyle}>
           <div style={headerLeftStyle}>

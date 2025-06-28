@@ -76,6 +76,21 @@ export const validateCityName = (cityName) => {
   return { isValid: true, error: null };
 };
 
+// Optional text validation for nodes that don't require input
+export const validateOptionalText = (text) => {
+  // Allow empty input
+  if (!text || text.trim() === '') {
+    return { isValid: true, error: null };
+  }
+  
+  // If text is provided, ensure it's not too short
+  if (text.trim().length < 1) {
+    return { isValid: false, error: 'Text must be at least 1 character' };
+  }
+  
+  return { isValid: true, error: null };
+};
+
 // Generic text validation for other nodes
 export const validateText = (text, minLength = 1) => {
   if (!text || text.trim() === '') {
@@ -101,6 +116,9 @@ export const validateNodeInput = (nodeType, inputValue) => {
     case 'fdc3b924-2f2a-43e8-923f-3f118a51eb0e': // get_weather
       return validateCityName(inputValue);
     
+    case 'a1b2c3d4-e5f6-7890-abcd-ef1234567890': // fetch_top_news
+      return validateOptionalText(inputValue);
+    
     case '0ff35b88-681c-4c64-94b5-7b74dbfbb471': // summarize_html_content
     case '1a7c2b8e-e4ae-4c8e-b2c4-999b4b3cf80d': // convert_to_html_template
       // These nodes don't have input fields, so always valid
@@ -122,6 +140,9 @@ export const getValidationRules = (nodeType) => {
     
     case 'fdc3b924-2f2a-43e8-923f-3f118a51eb0e': // get_weather
       return 'Enter a valid city name (letters, spaces, hyphens only)';
+    
+    case 'a1b2c3d4-e5f6-7890-abcd-ef1234567890': // fetch_top_news
+      return 'Enter category (optional): technology, business, science, world, politics, or leave empty for general news';
     
     case '0ff35b88-681c-4c64-94b5-7b74dbfbb471': // summarize_html_content
     case '1a7c2b8e-e4ae-4c8e-b2c4-999b4b3cf80d': // convert_to_html_template

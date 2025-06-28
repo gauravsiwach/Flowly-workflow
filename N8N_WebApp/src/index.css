@@ -516,4 +516,47 @@ input[type="text"].custom-node-input:hover {
 .react-flow__node.react-flow__node-custom:focus-visible {
   border: 2px solid #3B82F6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
-} 
+}
+
+/* --- Loading Spinner Animation --- */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- End Loading Spinner Animation --- */
+
+/* --- React Flow Edge Styling --- */
+.react-flow__edge {
+  stroke: var(--edge-color, #475569) !important;
+  stroke-width: 2 !important;
+  stroke-opacity: 0.8 !important;
+}
+
+.react-flow__edge-path {
+  stroke: var(--edge-color, #475569) !important;
+  stroke-width: 2 !important;
+  stroke-opacity: 0.8 !important;
+}
+
+.react-flow__connection-line {
+  stroke: var(--edge-color, #475569) !important;
+  stroke-width: 2 !important;
+  stroke-opacity: 0.6 !important;
+}
+
+.react-flow__connection-path {
+  stroke: var(--edge-color, #475569) !important;
+  stroke-width: 2 !important;
+  stroke-opacity: 0.6 !important;
+}
+
+/* --- End React Flow Edge Styling --- */ 

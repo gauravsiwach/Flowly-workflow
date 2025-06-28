@@ -1,7 +1,7 @@
 // Sidebar.js
 import React, { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { Package, Clipboard, Globe, Cloud, FileText, Mail, Send, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Package, Clipboard, Globe, Cloud, FileText, Mail, Send, X, ChevronLeft, ChevronRight, Newspaper, Code } from 'lucide-react';
 
 const Sidebar = ({ onAddNode, isOpen, onToggle }) => {
   const { theme } = useTheme();
@@ -27,6 +27,24 @@ const nodes = [
     description: 'Fetches current weather info',
       inputType: 'text',
       icon: Cloud,
+  },
+  {
+    id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', // fetch_top_news
+    title: 'Fetch_Top_News',
+    label: '',
+      color: theme.colors.background,
+    type: 'custom',
+    description: 'Fetches latest news headlines from RSS feeds',
+      icon: Newspaper,
+  },
+  {
+    id: 'b2c3d4e5-f6g7-8901-bcde-f23456789012', // fetch_it_tech_news
+    title: 'Fetch_IT_Tech_News',
+    label: '',
+      color: theme.colors.background,
+    type: 'custom',
+    description: 'Fetches latest tech news from major tech sources',
+      icon: Code,
   },
   {
     id: '0ff35b88-681c-4c64-94b5-7b74dbfbb471', // summarize_html_content

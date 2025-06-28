@@ -29,6 +29,11 @@ const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode, i
   // Update ref when nodes change
   nodesRef.current = nodes;
   
+  // Set CSS custom property for edge colors
+  useEffect(() => {
+    document.documentElement.style.setProperty('--edge-color', theme.colors.flow.edge);
+  }, [theme.colors.flow.edge]);
+  
   const handleShowResult = useCallback((nodeId) => {
     // Find the node by ID using ref to avoid dependency
     const nodeWithResult = nodesRef.current.find(node => node.id === nodeId);
@@ -203,10 +208,23 @@ const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode, i
           transition: 'width 0.3s ease',
         }}
         defaultEdgeOptions={{
-          style: { stroke: theme.colors.flow.edge, strokeWidth: 2 },
+          style: { 
+            stroke: theme.colors.flow.edge, 
+            strokeWidth: 2,
+            strokeOpacity: 0.8,
+          },
           animated: false,
+          type: 'smoothstep',
+          sourceHandle: 'right',
+          targetHandle: 'left',
         }}
-        connectionLineStyle={{ stroke: theme.colors.flow.edge, strokeWidth: 2 }}
+        connectionLineStyle={{ 
+          stroke: theme.colors.flow.edge, 
+          strokeWidth: 2,
+          strokeOpacity: 0.6,
+        }}
+        connectionLineType="smoothstep"
+        connectionMode="loose"
         selectionKeyCode="Shift"
         multiSelectionKeyCode="Ctrl"
         deleteKeyCode="Delete"

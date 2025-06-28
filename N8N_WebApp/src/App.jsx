@@ -25,7 +25,7 @@ function AppContent() {
 
   const sendGraphData = async (graphData) => {
     try {
-      const res = await fetch('http://localhost:8000/run-graph', {
+      const res = await fetch('http://localhost:9000/run-graph', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

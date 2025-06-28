@@ -139,6 +139,47 @@ export default function ResultPanel({
   const nodeData = selectedNode.data;
   const result = nodeData.node_result;
 
+  // Check if this is HTML content (from Convert to HTML Template node)
+  const isHtmlContent = nodeData.title === 'Convert_to_HTML_Template' && 
+                       typeof result === 'string' && 
+                       result.includes('<html') && 
+                       result.includes('</html>');
+
+  // Create a safe HTML renderer
+  const renderContent = () => {
+    if (isHtmlContent) {
+      return (
+        <div 
+          style={{
+            ...resultStyle,
+            padding: '0',
+            overflow: 'hidden',
+            border: 'none',
+            background: 'white'
+          }}
+        >
+          <iframe
+            srcDoc={result}
+            style={{
+              width: '100%',
+              height: '400px',
+              border: 'none',
+              borderRadius: '6px'
+            }}
+            title="HTML Preview"
+            sandbox="allow-same-origin"
+          />
+        </div>
+      );
+    } else {
+      return (
+        <div style={resultStyle}>
+          {typeof result === 'string' ? result : JSON.stringify(result, null, 2)}
+        </div>
+      );
+    }
+  };
+
   return (
     <div style={panelStyle}>
       <div style={headerStyle}>
@@ -190,9 +231,7 @@ export default function ResultPanel({
         {/* Result Display */}
         {result ? (
           <>
-            <div style={resultStyle}>
-              {typeof result === 'string' ? result : JSON.stringify(result, null, 2)}
-            </div>
+            {renderContent()}
             
             <button 
               style={buttonStyle}
