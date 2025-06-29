@@ -163,7 +163,10 @@ function AppContent() {
   }, [nodes, edges]);
 
   const handleDeleteNode = useCallback((nodeIdToRemove) => {
-    setNodes((currentNodes) => currentNodes.filter((node) => node.id !== nodeIdToRemove));
+    setNodes((currentNodes) => {
+      const filteredNodes = currentNodes.filter((node) => node.id !== nodeIdToRemove);
+      return filteredNodes;
+    });
 
     setEdges((currentEdges) => {
       const incomingEdge = currentEdges.find((edge) => edge.target === nodeIdToRemove);
@@ -187,35 +190,62 @@ function AppContent() {
       }
 
       // If not a chain, just remove connected edges
-      return currentEdges.filter(
+      const filteredEdges = currentEdges.filter(
         (edge) => edge.source !== nodeIdToRemove && edge.target !== nodeIdToRemove
       );
+      return filteredEdges;
     });
   }, [setNodes, setEdges]);
 
-  const handleOpen = useCallback((data) => {
-    // Handle opening a saved flow
-    if (data.nodes && data.edges) {
-      // Update the flow canvas with the loaded data
-      setNodes(data.nodes);
-      setEdges(data.edges);
-      toast.success("✅ Flow loaded successfully!");
-    } else {
-      toast.error("❌ Invalid flow file format");
-    }
+  const handleNodeInputChange = useCallback((id, inputValue) => {
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === id
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                additional_input: {
+                  ...node.data.additional_input,
+                  [node.data.title]: inputValue
+                }
+              },
+            }
+          : node
+      )
+    );
+  }, [setNodes]);
+
+  const handleClear = useCallback(() => {
+    // Clear all nodes and edges
+    setNodes([]);
+    setEdges([]);
+    toast.success("✅ Flow cleared successfully!");
   }, [setNodes, setEdges]);
 
   const handleImport = useCallback((data) => {
     // Handle importing additional nodes/edges
     if (data.nodes) {
+      // Ensure imported nodes have the onDelete function
+      const nodesWithDelete = data.nodes.map(node => ({
+        ...node,
+        data: {
+          ...node.data,
+          onDelete: handleDeleteNode,
+          onChange: handleNodeInputChange
+        }
+      }));
+      
       // Add imported nodes to the current flow
-      // This simple version replaces existing nodes, a merge would be more complex
-      setNodes(prevNodes => [...prevNodes, ...data.nodes]);
+      setNodes(prevNodes => [...prevNodes, ...nodesWithDelete]);
+      if (data.edges) {
+        setEdges(prevEdges => [...prevEdges, ...data.edges]);
+      }
       toast.success("✅ Flow imported successfully!");
     } else {
       toast.error("❌ Invalid import file format");
     }
-  }, [setNodes]);
+  }, [setNodes, setEdges, handleDeleteNode, handleNodeInputChange]);
 
   const handleExport = useCallback(() => {
     // Export current flow data
@@ -235,10 +265,12 @@ function AppContent() {
         version: '1.0.0',
         nodeCount: currentNodes.length,
         edgeCount: currentEdges.length,
+        description: 'N8N Flow Builder Export',
+        nodeTypes: [...new Set(currentNodes.map(node => node.data.title))],
       }
     };
 
-    //toast.success("✅ Flow exported successfully!");
+    toast.success("✅ Flow exported successfully!");
     return exportData;
   }, [nodes, edges]);
 
@@ -290,10 +322,11 @@ function AppContent() {
     }}>
       <Header 
         onSave={()=>{}}
-        onOpen={handleOpen}
+        onOpen={()=>{}}
         onImport={handleImport}
         onExport={handleExport}
         onValidate={handleValidateFlow}
+        onClear={handleClear}
       />
       
       <div style={{ 

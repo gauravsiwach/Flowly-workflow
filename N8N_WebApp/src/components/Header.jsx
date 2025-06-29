@@ -1,9 +1,9 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import ThemeSelector from './ThemeSelector';
-import { Rocket, Save, CheckCircle, FolderOpen, Download, Upload } from 'lucide-react';
+import { Rocket, Save, CheckCircle, FolderOpen, Download, Upload, Trash2 } from 'lucide-react';
 
-const Header = ({ onSave, onOpen, onImport, onExport, onValidate }) => {
+const Header = ({ onSave, onImport, onExport, onValidate, onClear }) => {
   const { theme } = useTheme();
 
   const headerStyle = {
@@ -69,30 +69,6 @@ const Header = ({ onSave, onOpen, onImport, onExport, onValidate }) => {
     onSave?.();
   };
 
-  const handleOpen = () => {
-    // Create a file input for opening files
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json,.flow';
-    input.onchange = (e) => {
-      const file = e.target.files[0];
-      if (file && onOpen) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          try {
-            const data = JSON.parse(event.target.result);
-            onOpen(data);
-          } catch (error) {
-            console.error('Error parsing file:', error);
-            alert('Invalid file format');
-          }
-        };
-        reader.readAsText(file);
-      }
-    };
-    input.click();
-  };
-
   const handleImport = () => {
     // Create a file input for importing files
     const input = document.createElement('input');
@@ -108,8 +84,11 @@ const Header = ({ onSave, onOpen, onImport, onExport, onValidate }) => {
             onImport(data);
           } catch (error) {
             console.error('Error parsing file:', error);
-            alert('Invalid file format');
+            alert('Invalid file format. Please select a valid JSON file.');
           }
+        };
+        reader.onerror = () => {
+          alert('Error reading file. Please try again.');
         };
         reader.readAsText(file);
       }
@@ -132,6 +111,15 @@ const Header = ({ onSave, onOpen, onImport, onExport, onValidate }) => {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+      }
+    }
+  };
+
+  const handleClear = () => {
+    if (onClear) {
+      const confirmed = window.confirm('Are you sure you want to clear the current flow? This action cannot be undone.');
+      if (confirmed) {
+        onClear();
       }
     }
   };
@@ -179,7 +167,6 @@ const Header = ({ onSave, onOpen, onImport, onExport, onValidate }) => {
 
         <button
           className="header-button"
-          onClick={handleOpen}
           style={secondaryButtonStyle}
           onMouseEnter={(e) => {
             e.target.style.background = theme.colors.border;
@@ -220,6 +207,21 @@ const Header = ({ onSave, onOpen, onImport, onExport, onValidate }) => {
         >
           <Upload size={14} />
           Export
+        </button>
+
+        <button
+          className="header-button"
+          onClick={handleClear}
+          style={secondaryButtonStyle}
+          onMouseEnter={(e) => {
+            e.target.style.background = theme.colors.border;
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = theme.colors.surface;
+          }}
+        >
+          <Trash2 size={14} />
+          Clear
         </button>
 
         <ThemeSelector />

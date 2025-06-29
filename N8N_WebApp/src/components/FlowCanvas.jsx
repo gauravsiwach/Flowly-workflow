@@ -48,22 +48,16 @@ const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode, i
   
   // Memoize nodeTypes to prevent React Flow warning
   const nodeTypes = useMemo(() => {
-    const withDeletable = (NodeComponent) => {
-      return (props) => {
+    return {
+      custom: (props) => {
         console.log('FlowCanvas nodeTypes wrapper:', { nodeId: props.id, isExecuting });
         return (
-          <DeletableNode {...props}>
-            <NodeComponent {...props} setNodes={setNodes} onShowResult={handleShowResult} isExecuting={isExecuting} />
-          </DeletableNode>
+          <CustomNode {...props} setNodes={setNodes} onShowResult={handleShowResult} isExecuting={isExecuting} />
         );
-      };
-    };
-
-    return {
-      custom: withDeletable(CustomNode),
-      default: withDeletable(({ data }) => <div>{data.label}</div>),
-      input: withDeletable(({ data }) => <div>{data.label}</div>),
-      output: withDeletable(({ data }) => <div>{data.label}</div>),
+      },
+      default: (props) => <div>{props.data.label}</div>,
+      input: (props) => <div>{props.data.label}</div>,
+      output: (props) => <div>{props.data.label}</div>,
     };
   }, [setNodes, handleShowResult, isExecuting]);
 
@@ -227,7 +221,7 @@ const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode, i
         connectionMode="loose"
         selectionKeyCode="Shift"
         multiSelectionKeyCode="Ctrl"
-        deleteKeyCode="Delete"
+        deleteKeyCode={null}
         snapToGrid={true}
         snapGrid={[15, 15]}
       >

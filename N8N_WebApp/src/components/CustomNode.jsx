@@ -79,8 +79,8 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult, is
   };
 
   const deleteButtonStyle = {
-    width: '12px', // Reduced size
-    height: '12px', // Reduced size
+    width: '16px', // Increased size for better clickability
+    height: '16px', // Increased size for better clickability
     background: theme.colors.button.secondary,
     border: `1px solid ${theme.colors.border}`,
     borderRadius: '50%',
@@ -88,12 +88,14 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult, is
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '8px', // Reduced font size
+    fontSize: '8px',
     fontWeight: 'bold',
     color: theme.colors.text.primary,
     transition: 'all 0.2s ease',
     padding: 0,
     outline: 'none',
+    position: 'relative', // Ensure it's above other elements
+    zIndex: 10, // Ensure it's clickable
   };
 
   const iconStyle = {
@@ -210,8 +212,10 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult, is
   };
 
   const handleDeleteClick = (e) => {
+    e.preventDefault();
     e.stopPropagation();
-    if (data.onDelete) {
+    
+    if (data.onDelete && typeof data.onDelete === 'function') {
       data.onDelete(id);
     }
   };
@@ -287,6 +291,13 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult, is
             className="node-delete-button"
             style={deleteButtonStyle} 
             onClick={handleDeleteClick}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              e.target.style.transform = 'scale(0.9)';
+            }}
+            onMouseUp={(e) => {
+              e.target.style.transform = 'scale(1)';
+            }}
             onMouseEnter={(e) => {
               e.target.style.background = theme.colors.button.hover;
               e.target.style.borderColor = theme.colors.primary;
@@ -296,9 +307,10 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult, is
               e.target.style.background = theme.colors.button.secondary;
               e.target.style.borderColor = theme.colors.border;
               e.target.style.color = theme.colors.text.primary;
+              e.target.style.transform = 'scale(1)';
             }}
           >
-            <X size={6} style={{ color: 'currentColor' }} />
+            <X size={8} style={{ color: 'currentColor' }} />
           </button>
         </div>
         <div style={bodyStyle}>
