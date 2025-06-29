@@ -1,13 +1,14 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
-import Header from './components/Header';
-import Sidebar from './components/Sidebar';
-import FlowCanvas from './components/FlowCanvas';
-import ConfigPanel from './components/ConfigPanel';
+import Header from './components/Header/Header';
+import Sidebar from './components/Sidebar/Sidebar';
+import FlowCanvas from './components/FlowCanvas/FlowCanvas';
+import ConfigPanel from './components/ConfigPanel/ConfigPanel';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { validateAllNodes, getValidationSummary } from './utils/validation';
+import { executeGraph, processApiResults } from './services/workflowService';
 
 function AppContent() {
   const [nodes, setNodes] = useState([]);
@@ -22,27 +23,6 @@ function AppContent() {
     setNewNode(nodeData);
     setTimeout(() => setNewNode(null), 100);
   }, []);
-
-  const sendGraphData = async (graphData) => {
-    try {
-      const res = await fetch('http://localhost:9000/run-graph', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(graphData),
-      });
-
-      const data = await res.json();
-      console.log('✅ API Response:', data);
-      toast.success("✅ Flow executed successfully!");
-      return data;
-    } catch (error) {
-      console.error('❌ Fetch error:', error);
-      toast.error("❌ Failed to execute flow");
-      return null;
-    }
-  };
 
   const handleValidateFlow = useCallback(async () => {
     if (nodes.length === 0) {
@@ -107,34 +87,15 @@ function AppContent() {
 
       console.log('handleValidateFlow: Sending API request');
       // Send both graph_flowData and additional_input in the payload
-      const apiResults = await sendGraphData({
+      const apiResults = await executeGraph({
         graph_flowData: executionList,
         additional_input
       });
       console.log('handleValidateFlow: API response received');
-      let resultsArray = apiResults;
-      let additionalInputArray = [];
-      if (apiResults && apiResults.result) {
-        if (apiResults.result.results) {
-          resultsArray = apiResults.result.results;
-          additionalInputArray = apiResults.result.additional_input || [];
-        } else {
-          resultsArray = apiResults.result;
-        }
-      }
+      
+      const { resultsArray, additionalInputArray } = processApiResults(apiResults);
       
       if (resultsArray) {
-        if (typeof resultsArray === 'string') {
-          resultsArray = resultsArray
-            .split(/}\s*{/) // split on }{
-            .map((chunk, idx, arr) => {
-              if (arr.length === 1) return JSON.parse(chunk);
-              if (idx === 0) return JSON.parse(chunk + '}');
-              if (idx === arr.length - 1) return JSON.parse('{' + chunk);
-              return JSON.parse('{' + chunk + '}');
-            });
-        }
-        if (!Array.isArray(resultsArray)) resultsArray = [resultsArray];
         setNodes(currentNodes =>
           currentNodes.map(node => {
             // Find result for this node
@@ -156,6 +117,9 @@ function AppContent() {
           })
         );
       }
+    } catch (error) {
+      console.error('❌ Flow execution error:', error);
+      toast.error("❌ Failed to execute flow");
     } finally {
       console.log('handleValidateFlow: Execution complete, setting isExecuting to false');
       setIsExecuting(false);
@@ -220,7 +184,6 @@ function AppContent() {
     // Clear all nodes and edges
     setNodes([]);
     setEdges([]);
-    toast.success("✅ Flow cleared successfully!");
   }, [setNodes, setEdges]);
 
   const handleImport = useCallback((data) => {
@@ -273,6 +236,51 @@ function AppContent() {
     toast.success("✅ Flow exported successfully!");
     return exportData;
   }, [nodes, edges]);
+
+  const handleLoadTemplate = useCallback((template) => {
+    // Clear current flow
+    setNodes([]);
+    setEdges([]);
+    
+    // Generate unique IDs for the template nodes
+    const nodeIdMap = {};
+    const templateNodes = template.nodes.map((node, index) => {
+      const newId = `node_${Date.now()}_${index}`;
+      nodeIdMap[node.id] = newId;
+      
+      return {
+        id: newId,
+        type: node.type,
+        position: node.position,
+        style: {
+          width: node.inputType ? 220 : 160,
+          height: node.inputType ? 120 : 80,
+        },
+        data: {
+          title: node.title,
+          label: node.label,
+          description: node.description,
+          node_id: node.id,
+          inputType: node.inputType,
+          onChange: handleNodeInputChange,
+          onDelete: handleDeleteNode,
+          additional_input: {},
+          node_result: null,
+        },
+      };
+    });
+
+    // Generate edges with new node IDs
+    const templateEdges = template.edges.map((edge, index) => ({
+      id: `edge_${Date.now()}_${index}`,
+      source: nodeIdMap[edge.source],
+      target: nodeIdMap[edge.target],
+    }));
+
+    // Set the template nodes and edges
+    setNodes(templateNodes);
+    setEdges(templateEdges);
+  }, [setNodes, setEdges, handleNodeInputChange, handleDeleteNode]);
 
   const getOrderedNodeListWithSeq = (edges) => {
     const nodeMap = {};
@@ -356,6 +364,7 @@ function AppContent() {
         onAddNode={handleAddNode}
         isOpen={isSidebarOpen}
         onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        onLoadTemplate={handleLoadTemplate}
       />
       
       <ConfigPanel 

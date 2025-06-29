@@ -559,4 +559,117 @@ input[type="text"].custom-node-input:hover {
   stroke-opacity: 0.6 !important;
 }
 
-/* --- End React Flow Edge Styling --- */ 
+/* --- End React Flow Edge Styling --- */
+
+/* Add smooth animations for sidebar categories */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.sidebar-category-expand {
+  animation: slideDown 0.3s ease-out;
+}
+
+.sidebar-category-collapse {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Template Node Preview Styles - Always Applied */
+.template-node-preview {
+  background: var(--color-background);
+  border: 2px solid var(--color-border); /* Increased border width for tile appearance */
+  padding: 6px 6px; /* Reduced horizontal padding to 6px */
+  border-radius: 6px; /* Slightly increased border radius */
+  font-size: 10px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  width: 112px; /* Increased by 2px from 110px */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer; /* Changed from 'help' to 'pointer' to remove the ? symbol */
+  flex-shrink: 0; /* Prevent shrinking */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Added subtle shadow for tile effect */
+  transition: all 0.2s ease; /* Smooth transition for hover effects */
+}
+
+.template-node-preview:hover {
+  border-color: #3b82f6; /* More visible blue color on hover */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px); /* Slight lift effect on hover */
+}
+
+.template-node-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  max-width: 112px; /* Increased to match container width */
+}
+
+/* Fix scrollbar width issue in sidebar */
+.app-sidebar > div:last-child {
+  padding-right: 0; /* Remove padding since scrollbar is always visible */
+  box-sizing: border-box;
+  overflow-y: scroll; /* Always show scrollbar to prevent width changes */
+  scrollbar-width: thin; /* For Firefox */
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent; /* For Firefox */
+  /* Ensure consistent width by always reserving scrollbar space */
+  width: calc(100% - 8px); /* Subtract scrollbar width */
+}
+
+/* Webkit scrollbar styling for Chrome/Safari */
+.app-sidebar > div:last-child::-webkit-scrollbar {
+  width: 8px;
+}
+
+.app-sidebar > div:last-child::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-sidebar > div:last-child::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.app-sidebar > div:last-child::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Alternative fix - ensure sidebar content maintains consistent width */
+.sidebar-content {
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 17px; /* Account for scrollbar width */
+}
+
+/* Ensure template nodes container maintains width */
+.template-nodes-container {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px; /* Further reduced gap for maximum fit */
+  padding-right: 8px; /* Extra padding to account for scrollbar */
+} 

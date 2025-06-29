@@ -1,6 +1,6 @@
 import React from 'react';
-import { useTheme } from '../contexts/ThemeContext';
-import ThemeSelector from './ThemeSelector';
+import { useTheme } from '../../contexts/ThemeContext';
+import ThemeSelector from '../ThemeSelector/ThemeSelector';
 import { Rocket, Save, CheckCircle, FolderOpen, Download, Upload, Trash2 } from 'lucide-react';
 
 const Header = ({ onSave, onImport, onExport, onValidate, onClear }) => {

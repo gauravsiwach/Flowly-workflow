@@ -10,10 +10,10 @@ import {
   useReactFlow
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import CustomNode from './CustomNode';
-import DeletableNode from './DeletableNode';
-import ResultPanel from './ResultPanel';
-import { useTheme } from '../contexts/ThemeContext';
+import CustomNode from '../CustomNode/CustomNode';
+import DeletableNode from '../DeletableNode/DeletableNode';
+import ResultPanel from '../ResultPanel/ResultPanel';
+import { useTheme } from '../../contexts/ThemeContext';
 
 // Move ID counter outside component to prevent reset on re-renders
 let globalId = 0;

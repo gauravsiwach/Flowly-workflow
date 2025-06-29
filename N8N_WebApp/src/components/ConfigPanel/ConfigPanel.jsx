@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { Settings, X, ChevronLeft, ChevronRight, Database, Palette, Code, Shield, MessageSquare } from 'lucide-react';
 
 const ConfigPanel = ({ isOpen, onToggle }) => {

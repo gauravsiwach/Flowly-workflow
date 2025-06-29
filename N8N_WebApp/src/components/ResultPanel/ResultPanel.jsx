@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FileText, X, Copy, Check, Eye } from 'lucide-react';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function ResultPanel({ 
   selectedNode, 

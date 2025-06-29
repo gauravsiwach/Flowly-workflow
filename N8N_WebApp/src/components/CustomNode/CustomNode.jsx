@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Handle, Position, NodeResizer } from '@xyflow/react';
-import { useTheme } from '../contexts/ThemeContext';
-import { validateNodeInput, getValidationRules } from '../utils/validation';
+import { useTheme } from '../../contexts/ThemeContext';
+import { validateNodeInput, getValidationRules } from '../../utils/validation';
 import { FileText, X, Eye, Loader2 } from 'lucide-react';
 
 export default function CustomNode({ id, data, style, setNodes, onShowResult, isExecuting }) {
