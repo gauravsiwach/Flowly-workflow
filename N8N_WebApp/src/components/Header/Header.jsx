@@ -3,7 +3,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import ThemeSelector from '../ThemeSelector/ThemeSelector';
 import { Rocket, Save, CheckCircle, FolderOpen, Download, Upload, Trash2 } from 'lucide-react';
 
-const Header = ({ onSave, onImport, onExport, onValidate, onClear }) => {
+const Header = ({ onSave, onImport, onExport, onValidate, onValidateStream, onClear }) => {
   const { theme } = useTheme();
 
   const headerStyle = {
@@ -162,7 +162,21 @@ const Header = ({ onSave, onImport, onExport, onValidate, onClear }) => {
           }}
         >
           <CheckCircle size={14} />
-          Validate
+          Execute
+        </button>
+
+        <button
+          onClick={onValidateStream}
+          style={secondaryButtonStyle}
+          onMouseEnter={(e) => {
+            e.target.style.background = theme.colors.border;
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = theme.colors.surface;
+          }}
+        >
+          <CheckCircle size={14} />
+          Execute Stream
         </button>
 
         <button

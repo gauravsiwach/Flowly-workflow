@@ -81,4 +81,36 @@ export const processApiResults = (apiResults) => {
   }
   
   return { resultsArray, additionalInputArray };
-}; 
+};
+
+/**
+ * Stream graph execution results from backend
+ * @param {Object} graphData - The graph data to execute
+ * @returns {AsyncGenerator<Object>} - Async generator yielding each streamed result as JSON
+ */
+export async function* streamGraphExecution(graphData) {
+  const response = await fetch(`${API_BASE_URL}/run-graph-stream`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(graphData),
+  });
+  if (!response.body) throw new Error('No response body for streaming');
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let lines = buffer.split('\n');
+    buffer = lines.pop(); // last line may be incomplete
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      try {
+        yield JSON.parse(line);
+      } catch (e) {
+        console.error('Failed to parse streamed line:', line, e);
+      }
+    }
+  }
+} 

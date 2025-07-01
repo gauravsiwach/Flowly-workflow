@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 from fastapi.middleware.cors import CORSMiddleware
-from code_graph_flow_auto import execute_graph_flow_stream, stream_graph_flow
+from code_graph_flow_auto import execute_graph_flow, execute_graph_flow_stream
 from fastapi.responses import StreamingResponse
 import json
 
@@ -42,7 +42,7 @@ async def run_graph(payload: GraphFlowRequest):
         additional_input = payload.additional_input
         if not user_input:
             raise ValueError("Missing 'graph_flowData' in request body")
-        result = execute_graph_flow_stream([item.model_dump() for item in user_input], [item.model_dump() for item in additional_input])
+        result = execute_graph_flow([item.model_dump() for item in user_input], [item.model_dump() for item in additional_input])
         return {"status": "completed", "result": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -53,7 +53,7 @@ async def run_graph_stream(payload: GraphFlowRequest):
         user_input = payload.graph_flowData
         if not user_input:
             raise ValueError("Missing 'graph_flowData' in request body")
-        return StreamingResponse(stream_graph_flow([item.model_dump() for item in user_input]), media_type="application/json")
+        return StreamingResponse(execute_graph_flow_stream([item.model_dump() for item in user_input]), media_type="application/json")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -10,7 +10,7 @@ class State(TypedDict):
     node_name: str
     additional_input: list
 
-def execute_graph_flow(workflow_input, additional_input=None):
+def execute_graph_flow_test(workflow_input, additional_input=None):
     state = {
          "node_input": None,
          "node_result": None,
@@ -29,7 +29,7 @@ def execute_graph_flow(workflow_input, additional_input=None):
     return result
 
 
-def execute_graph_flow_stream(workflow_input, additional_input=None):
+def execute_graph_flow(workflow_input, additional_input=None):
     state = {
          "node_input": None,
          "node_result": None,
@@ -45,41 +45,71 @@ def execute_graph_flow_stream(workflow_input, additional_input=None):
     graph = graph_builder.compile()
     result_stream = graph.stream(state)
     results = []
-    for step, event in zip(workflow_input, result_stream):
-        # Flatten if event is wrapped in a key
-        if isinstance(event, dict) and len(event) == 1:
-            inner = list(event.values())[0]
+    for node_input_config, node_output_state in zip(workflow_input, result_stream):
+        # Flatten if node_output_state is wrapped in a key
+        if isinstance(node_output_state, dict) and len(node_output_state) == 1:
+            inner = list(node_output_state.values())[0]
             if isinstance(inner, dict):
-                inner["node_id"] = step["node_id"]
-                inner["node_name"] = step.get("node_name", "")
+                inner["node_id"] = node_input_config["node_id"]
+                inner["node_name"] = node_input_config.get("node_name", "")
                 results.append(inner)
                 continue
-        event["node_id"] = step["node_id"]
-        event["node_name"] = step.get("node_name", "")
-        results.append(event)
+        node_output_state["node_id"] = node_input_config["node_id"]
+        node_output_state["node_name"] = node_input_config.get("node_name", "")
+        results.append(node_output_state)
     # print("✅ All states:", results)
     return {"results": results, "additional_input": state["additional_input"]}
 
 
-def stream_graph_flow(workflow_input):
+def execute_graph_flow_stream(workflow_input, additional_input=None):
     state = {
          "node_input": None,
          "node_result": None,
-         "node_id": None,
-         "node_name": None
+         "node_id": "",
+         "node_name": "",
+         "additional_input": additional_input or []
     }
-    for step in workflow_input:
-        if "node_input" in step:
-            state["node_input"] = step["node_input"]
+    for node_input_config in workflow_input:
+        if "node_input" in node_input_config:
+            state["node_input"] = node_input_config["node_input"]
+            state["node_id"] = node_input_config["node_id"]
+            state["node_name"] = function_map.get(node_input_config["node_id"], "")
             break
     graph_builder = build_graph_from_user_input(workflow_input)
     graph = graph_builder.compile()
-    ordered_steps = sorted(workflow_input, key=lambda x: x["seq"])
-    result_stream = graph.stream(state, stream_mode="values")
-    for step, event in zip(ordered_steps, result_stream):
-        event["node_id"] = step["node_id"]
-        event["node_name"] = step.get("node_name", "")
-        yield json.dumps(event) + "\n"
+    result_stream = graph.stream(state)
+    for node_input_config, node_output_state in zip(workflow_input, result_stream):
+        # Flatten if node_output_state is wrapped in a key
+        if isinstance(node_output_state, dict) and len(node_output_state) == 1:
+            inner = list(node_output_state.values())[0]
+            if isinstance(inner, dict):
+                inner["node_id"] = node_input_config["node_id"]
+                inner["node_name"] = node_input_config.get("node_name", "")
+                # Update additional_input for this node
+                input_entry = {
+                    "node_id": node_input_config["node_id"],
+                    "node_input": inner.get("node_input", "")
+                }
+                existing = next((item for item in state["additional_input"] if item["node_id"] == input_entry["node_id"]), None)
+                if existing:
+                    existing["node_input"] = input_entry["node_input"]
+                else:
+                    state["additional_input"].append(input_entry)
+                yield json.dumps({"results": inner, "additional_input": state["additional_input"]}) + "\n"
+                continue
+        node_output_state["node_id"] = node_input_config["node_id"]
+        node_output_state["node_name"] = node_input_config.get("node_name", "")
+        # Update additional_input for this node
+        input_entry = {
+            "node_id": node_input_config["node_id"],
+            "node_input": node_output_state.get("node_input", "")
+        }
+        existing = next((item for item in state["additional_input"] if item["node_id"] == input_entry["node_id"]), None)
+        if existing:
+            existing["node_input"] = input_entry["node_input"]
+        else:
+            state["additional_input"].append(input_entry)
+        yield json.dumps({"results": node_output_state, "additional_input": state["additional_input"]}) + "\n"
 
 
 # execute_graph_flow([

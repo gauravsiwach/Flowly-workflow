@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Handle, Position, NodeResizer } from '@xyflow/react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { validateNodeInput, getValidationRules } from '../../utils/validation';
-import { FileText, X, Eye, Loader2 } from 'lucide-react';
+import { FileText, X, Eye, Loader2, CheckCircle } from 'lucide-react';
 
 export default function CustomNode({ id, data, style, setNodes, onShowResult, isExecuting }) {
   const { theme } = useTheme();
@@ -123,7 +123,7 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult, is
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'flex-start',
-    padding: '4px 6px',
+    padding: '0px 6px', // Set padding to 0px 6px
     borderTop: `1px solid ${theme.colors.border}`,
     background: theme.colors.surface,
     borderBottomLeftRadius: '4px',
@@ -141,6 +141,7 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult, is
     fontWeight: '500',
     transition: 'all 0.2s ease',
     opacity: data.node_result ? 1 : 0.6,
+    marginBottom: '5px', // Move Result label and Eye icon up by 5px
   };
 
   const labelStyle = {
@@ -283,7 +284,7 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult, is
             <div style={titleStyle}>
               {data.title.replace(/_/g, ' ')}
             </div>
-            {isExecuting && (
+            {data.isLoading && (
               <Loader2 size={14} color={theme.colors.primary} className="spin" style={{ marginLeft: 6 }} />
             )}
           </div>
@@ -352,6 +353,10 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult, is
             <Eye size={10} style={{ color: 'currentColor' }} />
           </div>
         </div>
+        {/* Executed check icon in bottom right */}
+        {data.node_result && !data.isLoading && (
+          <CheckCircle size={14} color="#22c55e" style={{ position: 'absolute', bottom: 6, right: 6, background: theme.colors.surface, borderRadius: '50%' }} title="Node executed" />
+        )}
       </div>
     </div>
   );

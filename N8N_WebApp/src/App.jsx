@@ -8,7 +8,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { validateAllNodes, getValidationSummary } from './utils/validation';
-import { executeGraph, processApiResults } from './services/workflowService';
+import { executeGraph, processApiResults, streamGraphExecution } from './services/workflowService';
 
 function AppContent() {
   const [nodes, setNodes] = useState([]);
@@ -31,6 +31,16 @@ function AppContent() {
     }
     console.log('handleValidateFlow: Starting execution, setting isExecuting to true');
     setIsExecuting(true);
+    // Set isLoading: true for all nodes at the start
+    setNodes(currentNodes =>
+      currentNodes.map(node => ({
+        ...node,
+        data: {
+          ...node.data,
+          isLoading: true,
+        }
+      }))
+    );
     try {
       // First, validate all nodes
       const validationResults = validateAllNodes(nodes);
@@ -45,7 +55,8 @@ function AppContent() {
                 ...node,
                 data: {
                   ...node.data,
-                  validationError: nodeError
+                  validationError: nodeError,
+                  isLoading: false, // stop loader if validation fails
                 }
               };
             }
@@ -76,6 +87,16 @@ function AppContent() {
 
       if (executionList.length === 0 && nodes.length > 0) {
         toast.warning("⚠️ No valid execution list generated");
+        // stop loader for all nodes
+        setNodes(currentNodes =>
+          currentNodes.map(node => ({
+            ...node,
+            data: {
+              ...node.data,
+              isLoading: false,
+            }
+          }))
+        );
         return;
       }
 
@@ -108,6 +129,7 @@ function AppContent() {
               data: {
                 ...node.data,
                 node_result: resultObj ? resultObj.node_result : node.data.node_result,
+                isLoading: false, // stop loader for this node
                 additional_input: {
                   ...node.data.additional_input,
                   [node.data.title]: inputObj ? inputObj.node_input : (node.data.additional_input?.[node.data.title] || '')
@@ -125,6 +147,81 @@ function AppContent() {
       setIsExecuting(false);
     }
   }, [nodes, edges]);
+
+  const handleValidateFlowStream = useCallback(async () => {
+    if (nodes.length === 0) {
+      toast.warning("⚠️ No nodes to validate");
+      return;
+    }
+    setIsExecuting(true);
+    // Set isLoading: true for all nodes at the start
+    setNodes(currentNodes =>
+      currentNodes.map(node => ({
+        ...node,
+        data: {
+          ...node.data,
+          isLoading: true,
+        }
+      }))
+    );
+    try {
+      let executionList = [];
+      if (edges.length > 0) {
+        const sequence = edges.map((edge) => {
+          const sourceNode = nodes.find((n) => n.id === edge.source);
+          const targetNode = nodes.find((n) => n.id === edge.target);
+          return { from: sourceNode.data, to: targetNode.data };
+        });
+        executionList = getOrderedNodeListWithSeq(sequence);
+      } else {
+        executionList = nodes.map((node, idx) => ({
+          node_id: node.data.node_id,
+          seq: idx + 1,
+          node_input: node.data.additional_input?.[node.data.title] || "",
+          node_name: node.data.title,
+          node_result: ""
+        }));
+      }
+      const additionalInput = nodes.map(node => ({
+        node_id: node.data.node_id,
+        node_input: node.data.additional_input?.[node.data.title] || ''
+      }));
+      const payload = {
+        graph_flowData: executionList,
+        additional_input: additionalInput,
+      };
+      // Use the new streaming service
+      for await (const data of streamGraphExecution(payload)) {
+        if (data.results && data.results.node_id) {
+          setNodes(currentNodes =>
+            currentNodes.map(node => {
+              if (node.data.node_id === data.results.node_id) {
+                const inputObj = (data.additional_input || []).find(ai => ai.node_id === node.data.node_id);
+                return {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    node_result: data.results.node_result,
+                    isLoading: false,
+                    additional_input: {
+                      ...node.data.additional_input,
+                      [node.data.title]: inputObj ? inputObj.node_input : (node.data.additional_input?.[node.data.title] || '')
+                    }
+                  }
+                };
+              }
+              return node;
+            })
+          );
+        }
+      }
+      setIsExecuting(false);
+    } catch (error) {
+      setIsExecuting(false);
+      toast.error('❌ Stream validation failed');
+      console.error('Stream validation error:', error);
+    }
+  }, [nodes, edges, toast]);
 
   const handleDeleteNode = useCallback((nodeIdToRemove) => {
     setNodes((currentNodes) => {
@@ -335,6 +432,7 @@ function AppContent() {
         onExport={handleExport}
         onValidate={handleValidateFlow}
         onClear={handleClear}
+        onValidateStream={handleValidateFlowStream}
       />
       
       <div style={{ 
