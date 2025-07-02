@@ -1,5 +1,5 @@
 // Workflow service for handling all backend communication and workflow operations
-const API_BASE_URL = 'http://localhost:9000';
+const API_BASE_URL = 'http://localhost:8000';
 
 /**
  * Send graph data to backend for execution

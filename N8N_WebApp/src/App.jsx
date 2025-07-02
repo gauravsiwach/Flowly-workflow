@@ -9,6 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { validateAllNodes, getValidationSummary } from './utils/validation';
 import { executeGraph, processApiResults, streamGraphExecution } from './services/workflowService';
+import { APP_NAME } from './utils/constants';
 
 function AppContent() {
   const [nodes, setNodes] = useState([]);
@@ -325,7 +326,7 @@ function AppContent() {
         version: '1.0.0',
         nodeCount: currentNodes.length,
         edgeCount: currentEdges.length,
-        description: 'N8N Flow Builder Export',
+        description: `${APP_NAME} Export`,
         nodeTypes: [...new Set(currentNodes.map(node => node.data.title))],
       }
     };

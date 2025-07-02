@@ -2,6 +2,7 @@ import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import ThemeSelector from '../ThemeSelector/ThemeSelector';
 import { Rocket, Save, CheckCircle, FolderOpen, Download, Upload, Trash2 } from 'lucide-react';
+import { APP_NAME } from '../../utils/constants';
 
 const Header = ({ onSave, onImport, onExport, onValidate, onValidateStream, onClear }) => {
   const { theme } = useTheme();
@@ -106,7 +107,7 @@ const Header = ({ onSave, onImport, onExport, onValidate, onValidateStream, onCl
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `n8n-flow-${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `${APP_NAME.toLowerCase()}-flow-${new Date().toISOString().split('T')[0]}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -129,7 +130,7 @@ const Header = ({ onSave, onImport, onExport, onValidate, onValidateStream, onCl
       <div style={leftSectionStyle}>
         <div style={logoStyle}>
           <Rocket size={18} style={{ marginRight: '8px' }} />
-          N8N Flow Builder
+          {APP_NAME}
         </div>
       </div>
 

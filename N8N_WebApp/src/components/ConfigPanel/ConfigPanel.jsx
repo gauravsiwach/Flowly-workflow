@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Settings, X, ChevronLeft, ChevronRight, Database, Palette, Code, Shield, MessageSquare } from 'lucide-react';
+import { APP_NAME } from '../../utils/constants';
 
 const ConfigPanel = ({ isOpen, onToggle }) => {
   const { theme, fontSize, setFontSize, gridOpacity, setGridOpacity } = useTheme();
@@ -159,7 +160,7 @@ const ConfigPanel = ({ isOpen, onToggle }) => {
             type="text"
             placeholder="My Workflow"
             style={inputStyle}
-            defaultValue="N8N Flow Builder"
+            defaultValue={APP_NAME}
           />
         </div>
 
