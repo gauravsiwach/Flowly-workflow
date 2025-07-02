@@ -15,7 +15,7 @@ def fetch_it_tech_news(state: Dict[str, Any]) -> Dict[str, Any]:
     # Calculate date threshold (7 days ago)
     now = datetime.now()
     seven_days_ago = now - timedelta(days=7)
-    print(f"Filtering tech news from: {seven_days_ago.strftime('%Y-%m-%d %H:%M:%S')} onwards")
+    #print(f"Filtering tech news from: {seven_days_ago.strftime('%Y-%m-%d %H:%M:%S')} onwards")
     
     # Define tech RSS news sources
     tech_sources = {
@@ -87,16 +87,16 @@ def fetch_it_tech_news(state: Dict[str, Any]) -> Dict[str, Any]:
     
     try:
         for source_name, source_info in tech_sources.items():
-            print(f"Fetching from {source_name}...")
+            #print(f"Fetching from {source_name}...")
             
             try:
                 # Parse RSS feed
                 feed = feedparser.parse(source_info["url"])
                 
-                if feed.bozo:
-                    print(f"  Warning: Feed parsing issues for {source_name}")
+                # if feed.bozo:
+                #     print(f"  Warning: Feed parsing issues for {source_name}")
                 
-                print(f"  Found {len(feed.entries)} entries in RSS feed")
+                # print(f"  Found {len(feed.entries)} entries in RSS feed")
                 
                 # Extract and filter headlines
                 filtered_headlines = []
@@ -112,7 +112,7 @@ def fetch_it_tech_news(state: Dict[str, Any]) -> Dict[str, Any]:
                         
                         # Skip articles older than 7 days
                         if not is_recent_article(pub_date, seven_days_ago):
-                            print(f"  Skipping old article: {title[:50]}... (published: {pub_date})")
+                            #print(f"  Skipping old article: {title[:50]}... (published: {pub_date})")
                             continue
                         
                         if title and len(title) > 10 and len(title) < 200:  # Basic validation

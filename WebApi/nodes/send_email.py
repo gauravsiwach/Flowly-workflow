@@ -8,6 +8,7 @@ def send_email(state: dict) -> dict:
     """
     Send email using SMTP with simple configuration and error handling.
     """
+    print("📰 email sending...")
     try:
         # Check configuration
         if not SENDER_EMAIL or not SENDER_PASSWORD:
@@ -57,8 +58,12 @@ def send_email(state: dict) -> dict:
             server.send_message(message)
         
         state["node_result"] = f"Email sent successfully to {recipient_email}"
+        # Propagate node_input for streaming
+        state["node_input"] = recipient_email
         return state
         
     except Exception as e:
         state["node_result"] = f"Error: Failed to send email - {str(e)}"
+        # Propagate node_input even on error
+        state["node_input"] = recipient_email if 'recipient_email' in locals() else None
         return state 

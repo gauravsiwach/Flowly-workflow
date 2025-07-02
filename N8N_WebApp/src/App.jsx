@@ -32,16 +32,6 @@ function AppContent() {
     }
     console.log('handleValidateFlow: Starting execution, setting isExecuting to true');
     setIsExecuting(true);
-    // Set isLoading: true for all nodes at the start
-    setNodes(currentNodes =>
-      currentNodes.map(node => ({
-        ...node,
-        data: {
-          ...node.data,
-          isLoading: true,
-        }
-      }))
-    );
     try {
       // First, validate all nodes
       const validationResults = validateAllNodes(nodes);
@@ -64,8 +54,20 @@ function AppContent() {
             return node;
           });
         });
+        setIsExecuting(false);
         return;
       }
+
+      // Set isLoading: true for all nodes only after validation passes
+      setNodes(currentNodes =>
+        currentNodes.map(node => ({
+          ...node,
+          data: {
+            ...node.data,
+            isLoading: true,
+          }
+        }))
+      );
 
       let executionList = [];
 
@@ -155,17 +157,43 @@ function AppContent() {
       return;
     }
     setIsExecuting(true);
-    // Set isLoading: true for all nodes at the start
-    setNodes(currentNodes =>
-      currentNodes.map(node => ({
-        ...node,
-        data: {
-          ...node.data,
-          isLoading: true,
-        }
-      }))
-    );
     try {
+      // First, validate all nodes (same as handleValidateFlow)
+      const validationResults = validateAllNodes(nodes);
+      const validationSummary = getValidationSummary(validationResults);
+
+      if (!validationResults.isValid) {
+        setNodes(currentNodes => {
+          return currentNodes.map(node => {
+            const nodeError = validationResults.nodeErrors[node.id];
+            if (nodeError) {
+              return {
+                ...node,
+                data: {
+                  ...node.data,
+                  validationError: nodeError,
+                  isLoading: false, // stop loader if validation fails
+                }
+              };
+            }
+            return node;
+          });
+        });
+        setIsExecuting(false);
+        return;
+      }
+
+      // Set isLoading: true for all nodes only after validation passes
+      setNodes(currentNodes =>
+        currentNodes.map(node => ({
+          ...node,
+          data: {
+            ...node.data,
+            isLoading: true,
+          }
+        }))
+      );
+
       let executionList = [];
       if (edges.length > 0) {
         const sequence = edges.map((edge) => {

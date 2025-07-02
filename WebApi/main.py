@@ -51,9 +51,10 @@ async def run_graph(payload: GraphFlowRequest):
 async def run_graph_stream(payload: GraphFlowRequest):
     try:
         user_input = payload.graph_flowData
+        additional_input = payload.additional_input
         if not user_input:
             raise ValueError("Missing 'graph_flowData' in request body")
-        return StreamingResponse(execute_graph_flow_stream([item.model_dump() for item in user_input]), media_type="application/json")
+        return StreamingResponse(execute_graph_flow_stream([item.model_dump() for item in user_input], [item.model_dump() for item in additional_input]), media_type="application/json")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

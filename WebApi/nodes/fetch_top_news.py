@@ -21,12 +21,12 @@ def fetch_top_news(state: Dict[str, Any]) -> Dict[str, Any]:
     else:
         category = "general"
     
-    print(f"Category: '{category}'")
+    #print(f"Category: '{category}'")
     
     # Calculate date threshold (2 days ago)
     now = datetime.now()
     two_days_ago = now - timedelta(days=2)
-    print(f"Filtering news from: {two_days_ago.strftime('%Y-%m-%d %H:%M:%S')} onwards")
+    #print(f"Filtering news from: {two_days_ago.strftime('%Y-%m-%d %H:%M:%S')} onwards")
     
     # Define RSS news sources
     news_sources = {
@@ -133,16 +133,16 @@ def fetch_top_news(state: Dict[str, Any]) -> Dict[str, Any]:
     
     try:
         for source_name, source_info in news_sources.items():
-            print(f"Fetching from {source_name}...")
+            #print(f"Fetching from {source_name}...")
             
             try:
                 # Parse RSS feed
                 feed = feedparser.parse(source_info["url"])
                 
-                if feed.bozo:
-                    print(f"  Warning: Feed parsing issues for {source_name}")
+                # if feed.bozo:
+                #     print(f"  Warning: Feed parsing issues for {source_name}")
                 
-                print(f"  Found {len(feed.entries)} entries in RSS feed")
+                # print(f"  Found {len(feed.entries)} entries in RSS feed")
                 
                 # Extract and filter headlines
                 filtered_headlines = []
@@ -158,7 +158,7 @@ def fetch_top_news(state: Dict[str, Any]) -> Dict[str, Any]:
                         
                         # Skip articles older than 2 days
                         if not is_recent_article(pub_date, two_days_ago):
-                            print(f"  Skipping old article: {title[:50]}... (published: {pub_date})")
+                            #print(f"  Skipping old article: {title[:50]}... (published: {pub_date})")
                             continue
                         
                         if title and len(title) > 10 and len(title) < 200:  # Basic validation

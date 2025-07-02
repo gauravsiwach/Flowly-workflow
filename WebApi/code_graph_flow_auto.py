@@ -85,31 +85,11 @@ def execute_graph_flow_stream(workflow_input, additional_input=None):
             if isinstance(inner, dict):
                 inner["node_id"] = node_input_config["node_id"]
                 inner["node_name"] = node_input_config.get("node_name", "")
-                # Update additional_input for this node
-                input_entry = {
-                    "node_id": node_input_config["node_id"],
-                    "node_input": inner.get("node_input", "")
-                }
-                existing = next((item for item in state["additional_input"] if item["node_id"] == input_entry["node_id"]), None)
-                if existing:
-                    existing["node_input"] = input_entry["node_input"]
-                else:
-                    state["additional_input"].append(input_entry)
-                yield json.dumps({"results": inner, "additional_input": state["additional_input"]}) + "\n"
+                yield json.dumps({"results": inner, "additional_input": additional_input or []}) + "\n"
                 continue
         node_output_state["node_id"] = node_input_config["node_id"]
         node_output_state["node_name"] = node_input_config.get("node_name", "")
-        # Update additional_input for this node
-        input_entry = {
-            "node_id": node_input_config["node_id"],
-            "node_input": node_output_state.get("node_input", "")
-        }
-        existing = next((item for item in state["additional_input"] if item["node_id"] == input_entry["node_id"]), None)
-        if existing:
-            existing["node_input"] = input_entry["node_input"]
-        else:
-            state["additional_input"].append(input_entry)
-        yield json.dumps({"results": node_output_state, "additional_input": state["additional_input"]}) + "\n"
+        yield json.dumps({"results": node_output_state, "additional_input": additional_input or []}) + "\n"
 
 
 # execute_graph_flow([
