@@ -1,4 +1,4 @@
-import { Globe, Cloud, FileText, Mail, Send, Newspaper, Code } from 'lucide-react';
+import { Globe, Cloud, FileText, Mail, Send, Newspaper, Code, Clipboard } from 'lucide-react';
 
 // Node definitions
 export const getNodes = (theme) => [
@@ -68,6 +68,16 @@ export const getNodes = (theme) => [
     inputType: 'text',
     icon: Send,
   },
+  {
+    id: 'e3b0c442-98fc-1c14-9afb-4c8996fb9242', // new guid for get_topic_content
+    title: 'Get_Topic_Content',
+    label: 'Enter Topic Name',
+    color: theme.colors.background,
+    type: 'custom',
+    description: 'Get a topic name from the user and search for it on Google',
+    inputType: 'text',
+    icon: Clipboard,
+  },
 ];
 
 // Node categories
@@ -75,7 +85,8 @@ export const nodeCategories = {
   "Web & Data Collection": [
     "Fetch_HTML_Content",
     "Fetch_Top_News", 
-    "Fetch_IT_Tech_News"
+    "Fetch_IT_Tech_News",
+    "Get_Topic_Content"
   ],
   "AI & Processing": [
     "Summarize_HTML"

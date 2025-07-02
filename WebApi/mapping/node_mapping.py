@@ -5,6 +5,7 @@ from nodes.convert_to_html_template import convert_to_html_template
 from nodes.send_email import send_email
 from nodes.fetch_top_news import fetch_top_news
 from nodes.fetch_it_tech_news import fetch_it_tech_news
+from nodes.get_topic_content import get_topic_content
 # from nodes.classify_query import classify_query  # Uncomment if needed
 
 function_map = {
@@ -14,7 +15,8 @@ function_map = {
     "8c5a1f02-d0cd-4c6d-96b6-51f1bc1f0b17": "fetch_html_content",
     "0ff35b88-681c-4c64-94b5-7b74dbfbb471": "summarize_html_content",
     "a1b2c3d4-e5f6-7890-abcd-ef1234567890": "fetch_top_news",
-    "b2c3d4e5-f6g7-8901-bcde-f23456789012": "fetch_it_tech_news"
+    "b2c3d4e5-f6g7-8901-bcde-f23456789012": "fetch_it_tech_news",
+    "e3b0c442-98fc-1c14-9afb-4c8996fb9242": "get_topic_content"
     # Add classify_query if needed
 }
 
@@ -26,5 +28,6 @@ node_functions = {
     "summarize_html_content": summarize_html_content,
     "fetch_top_news": fetch_top_news,
     "fetch_it_tech_news": fetch_it_tech_news,
+    "get_topic_content": get_topic_content,
     # "classify_query": classify_query,  # Add if used in your workflow
 } 
