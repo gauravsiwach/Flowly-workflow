@@ -4,6 +4,7 @@ import Header from './components/Header/Header';
 import Sidebar from './components/Sidebar/Sidebar';
 import FlowCanvas from './components/FlowCanvas/FlowCanvas';
 import ConfigPanel from './components/ConfigPanel/ConfigPanel';
+import LandingPage from './pages/LandingPage';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
@@ -12,6 +13,7 @@ import { executeGraph, processApiResults, streamGraphExecution } from './service
 import { APP_NAME } from './utils/constants';
 
 function AppContent() {
+  const [currentPage, setCurrentPage] = useState('landing'); // 'landing' or 'builder'
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [newNode, setNewNode] = useState(null);
@@ -19,6 +21,14 @@ function AppContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { theme } = useTheme();
   const [isExecuting, setIsExecuting] = useState(false);
+
+  const handleGetStarted = () => {
+    setCurrentPage('builder');
+  };
+
+  const handleBackToHome = () => {
+    setCurrentPage('landing');
+  };
 
   const handleAddNode = useCallback((nodeData) => {
     setNewNode(nodeData);
@@ -454,50 +464,57 @@ function AppContent() {
       color: theme.colors.text.primary,
       transition: 'all 0.3s ease'
     }}>
-      <Header 
-        onSave={()=>{}}
-        onOpen={()=>{}}
-        onImport={handleImport}
-        onExport={handleExport}
-        onValidate={handleValidateFlow}
-        onClear={handleClear}
-        onValidateStream={handleValidateFlowStream}
-      />
-      
-      <div style={{ 
-        display: 'flex', 
-        flex: 1,
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          flex: 1,
-          marginLeft: isSidebarOpen ? '280px' : '0',
-          marginRight: isConfigPanelOpen ? '400px' : '0',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        }}>
-          <FlowCanvas
-            nodes={nodes}
-            setNodes={setNodes}
-            edges={edges}
-            setEdges={setEdges}
-            newNode={newNode}
-            onDeleteNode={handleDeleteNode}
-            isExecuting={isExecuting}
+      {currentPage === 'landing' ? (
+        <LandingPage onGetStarted={handleGetStarted} />
+      ) : (
+        <>
+          <Header 
+            onSave={()=>{}}
+            onOpen={()=>{}}
+            onImport={handleImport}
+            onExport={handleExport}
+            onValidate={handleValidateFlow}
+            onClear={handleClear}
+            onValidateStream={handleValidateFlowStream}
+            onBackToHome={handleBackToHome}
           />
-        </div>
-      </div>
-      
-      <Sidebar 
-        onAddNode={handleAddNode}
-        isOpen={isSidebarOpen}
-        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-        onLoadTemplate={handleLoadTemplate}
-      />
-      
-      <ConfigPanel 
-        isOpen={isConfigPanelOpen}
-        onToggle={() => setIsConfigPanelOpen(!isConfigPanelOpen)}
-      />
+          
+          <div style={{ 
+            display: 'flex', 
+            flex: 1,
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              flex: 1,
+              marginLeft: isSidebarOpen ? '280px' : '0',
+              marginRight: isConfigPanelOpen ? '400px' : '0',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}>
+              <FlowCanvas
+                nodes={nodes}
+                setNodes={setNodes}
+                edges={edges}
+                setEdges={setEdges}
+                newNode={newNode}
+                onDeleteNode={handleDeleteNode}
+                isExecuting={isExecuting}
+              />
+            </div>
+          </div>
+          
+          <Sidebar 
+            onAddNode={handleAddNode}
+            isOpen={isSidebarOpen}
+            onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+            onLoadTemplate={handleLoadTemplate}
+          />
+          
+          <ConfigPanel 
+            isOpen={isConfigPanelOpen}
+            onToggle={() => setIsConfigPanelOpen(!isConfigPanelOpen)}
+          />
+        </>
+      )}
       
       <ToastContainer 
         position="top-right" 

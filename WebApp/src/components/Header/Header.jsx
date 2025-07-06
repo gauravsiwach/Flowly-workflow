@@ -1,10 +1,10 @@
 import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import ThemeSelector from '../ThemeSelector/ThemeSelector';
-import { Rocket, Save, CheckCircle, FolderOpen, Download, Upload, Trash2 } from 'lucide-react';
+import { Rocket, Save, CheckCircle, FolderOpen, Download, Upload, Trash2, Home } from 'lucide-react';
 import { APP_NAME } from '../../utils/constants';
 
-const Header = ({ onSave, onImport, onExport, onValidate, onValidateStream, onClear }) => {
+const Header = ({ onSave, onImport, onExport, onValidate, onValidateStream, onClear, onBackToHome }) => {
   const { theme } = useTheme();
 
   const headerStyle = {
@@ -132,6 +132,25 @@ const Header = ({ onSave, onImport, onExport, onValidate, onValidateStream, onCl
           <Rocket size={18} style={{ marginRight: '8px' }} />
           {APP_NAME}
         </div>
+        {onBackToHome && (
+          <button
+            onClick={onBackToHome}
+            style={{
+              ...secondaryButtonStyle,
+              marginLeft: '20px',
+              padding: '6px 10px'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = theme.colors.border;
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = theme.colors.surface;
+            }}
+          >
+            <Home size={14} />
+            Home
+          </button>
+        )}
       </div>
 
       <div style={rightSectionStyle}>
