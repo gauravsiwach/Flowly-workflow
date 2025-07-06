@@ -117,6 +117,7 @@ export default function ResultPanel({
     fontSize: 'var(--font-size-sm)',
     color: theme.colors.text.primary,
     fontWeight: '500',
+    lineBreak: 'anywhere'
   };
 
   const handleClose = () => {
@@ -139,8 +140,8 @@ export default function ResultPanel({
   const nodeData = selectedNode.data;
   const result = nodeData.node_result;
 
-  // Check if this is HTML content (from Convert to HTML Template node)
-  const isHtmlContent = nodeData.title === 'Convert_to_HTML_Template' && 
+  // Check if this is HTML content (from Convert to HTML Template or Template Generator node)
+  const isHtmlContent = (nodeData.title === 'Convert_to_HTML_Template' || nodeData.title === 'Template_Generator') && 
                        typeof result === 'string' && 
                        result.includes('<html') && 
                        result.includes('</html>');

@@ -138,6 +138,7 @@ const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode, i
         description: newNode.description || '',
         node_id: newNode.id,
         inputType: newNode.inputType,
+        fields: newNode.fields,
         onChange: handleNodeInputChange,
         onDelete: onDeleteNode,
         additional_input: {},

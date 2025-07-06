@@ -78,6 +78,31 @@ export const getNodes = (theme) => [
     inputType: 'text',
     icon: Clipboard,
   },
+  {
+    id: 'd4e5f6a7-1234-4bcd-8ef0-abcdef123456', // blog_researcher (new unique id)
+    title: 'Blog_Researcher',
+    label: 'Enter blog topic or question',
+    color: theme.colors.background,
+    type: 'custom',
+    description: 'Performs web research and summarizes findings for your blog topic',
+    inputType: 'text',
+    icon: FileText,
+    fields: [
+      { name: 'input', label: 'Blog Topic/Question', type: 'text', required: true },
+      { name: 'refURL', label: 'Reference Blog URL (optional)', type: 'text', required: false }
+    ]
+  },
+  {
+    id: 'f7e6d5c4-1234-4abc-9def-abcdef123456', // generate_html_from_template (unique id)
+    title: 'Template_Generator',
+    label: 'Template Generator',
+    description: 'Fetches an HTML template from a URL and fills it with content using AI',
+    type: 'custom',
+    icon: FileText,
+    fields: [
+      { name: 'templateURL', label: 'Template URL', type: 'text', required: true }
+    ]
+  },
 ];
 
 // Node categories
@@ -89,7 +114,9 @@ export const nodeCategories = {
     "Get_Topic_Content"
   ],
   "AI & Processing": [
-    "Summarize_HTML"
+    "Summarize_HTML",
+    "Blog_Researcher",
+    "Template_Generator"
   ],
   "Communication & Output": [
     "Convert_to_HTML_Template",
@@ -98,4 +125,4 @@ export const nodeCategories = {
   "External Services": [
     "Get_Weather"
   ]
-}; 
+};

@@ -39,6 +39,28 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult, is
     }
   }, [data.node_id, data.additional_input, data.title, data.inputType, data.validationError]);
 
+  // Dynamic multi-field support based on node definition
+  const hasFields = Array.isArray(data.fields) && data.fields.length > 0;
+  const [multiFieldValues, setMultiFieldValues] = useState(() => {
+    if (hasFields && data.additional_input?.[data.title]) {
+      try {
+        return JSON.parse(data.additional_input[data.title]);
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  });
+
+  // Update combined input for multi-field nodes
+  useEffect(() => {
+    if (hasFields) {
+      const combined = JSON.stringify(multiFieldValues);
+      data.onChange?.(id, combined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [multiFieldValues, hasFields]);
+
   // Determine minimum sizes based on whether node has input
   const hasInput = data.inputType !== undefined;
   const minWidth = hasInput ? 220 : 160;   // Increased width to accommodate larger fonts
@@ -320,17 +342,34 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult, is
           {data.label}
         </div>
           )}
-          {data.inputType && (
-        <input
-              type={data.inputType}
-              className="custom-node-input"
-              placeholder={getValidationRules(data.node_id)}
-              value={data.additional_input?.[data.title] || ''}
-              onChange={handleInputChange}
-              onClick={(e) => e.stopPropagation()}
-              onDoubleClick={(e) => e.stopPropagation()}
-              style={inputStyle}
-            />
+          {/* Multi-field nodes: render fields dynamically, others: default */}
+          {hasFields ? (
+            <>
+              {data.fields.map(field => (
+                <input
+                  key={field.name}
+                  type={field.type}
+                  className="custom-node-input"
+                  placeholder={field.label}
+                  value={multiFieldValues[field.name] || ''}
+                  onChange={e => setMultiFieldValues(prev => ({ ...prev, [field.name]: e.target.value }))}
+                  style={{ ...inputStyle, marginTop: field.name !== data.fields[0].name ? 4 : 0 }}
+                />
+              ))}
+            </>
+          ) : (
+            data.inputType && (
+              <input
+                type={data.inputType}
+                className="custom-node-input"
+                placeholder={getValidationRules(data.node_id)}
+                value={data.additional_input?.[data.title] || ''}
+                onChange={handleInputChange}
+                onClick={(e) => e.stopPropagation()}
+                onDoubleClick={(e) => e.stopPropagation()}
+                style={inputStyle}
+              />
+            )
           )}
 
           {data.description && (

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; padding: 2em; background: #f9f9f9; color: #222; }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 0.5em; }
+        .meta { color: #888; font-size: 0.9em; margin-bottom: 1.5em; }
+        .topic { font-size: 1.2em; color: #2563eb; font-weight: bold; margin-top: 1.5em; margin-bottom: 0.5em; }
+        .subtopics { margin: 0.5em 0 1.5em 1.5em; padding: 0; }
+        .subtopics li { color: #555; font-size: 1em; margin-bottom: 0.3em; list-style-type: disc; }
+        .content { margin-top: 2em; line-height: 1.7; }
+    </style>
+</head>
+<body>
+    <h1>{{title}}</h1>
+    <div class="meta">By {{author}} | {{date}}</div>
+    <div class="topic">{{topic}}</div>
+    {{#if subtopics}}
+    <ul class="subtopics">
+        {{subtopics}}
+    </ul>
+    {{/if}}
+    <div class="content">
+        {{content}}
+    </div>
+</body>
+</html> 
