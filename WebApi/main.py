@@ -58,6 +58,6 @@ async def run_graph_stream(payload: GraphFlowRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# uvicorn main:app --reload --host 0.0.0.0
+# uvicorn main:app --reload --host 0.0.0.0 --port 8000
 # uvicorn main:app --reload --host 0.0.0.0 --port 9000
 

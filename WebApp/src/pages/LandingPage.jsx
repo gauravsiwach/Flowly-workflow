@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { Zap, Globe, Mail, Brain, ArrowRight, Play, BookOpen, Users, Star, CheckCircle, Github, ExternalLink } from 'lucide-react';
+import HeroFlowAnimation from '../components/HeroFlowAnimation';
 
 const LandingPage = ({ onGetStarted }) => {
   const { theme } = useTheme();
@@ -66,73 +67,168 @@ const LandingPage = ({ onGetStarted }) => {
           <Zap size={32} color={theme.colors.primary} />
           <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Flowly</h1>
         </div>
-        <button
-          onClick={onGetStarted}
-          style={{
-            backgroundColor: theme.colors.primary,
-            color: 'white',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontWeight: '600'
-          }}
-        >
-          Get Started
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <nav style={{ display: 'flex', gap: '30px' }}>
+            <a href="#features" 
+               onClick={(e) => {
+                 e.preventDefault();
+                 document.getElementById('features').scrollIntoView({ behavior: 'smooth' });
+               }}
+               style={{ 
+                 color: theme.colors.text.secondary, 
+                 textDecoration: 'none',
+                 fontWeight: '500',
+                 transition: 'color 0.2s ease',
+                 cursor: 'pointer'
+               }}
+               onMouseEnter={(e) => e.target.style.color = theme.colors.primary}
+               onMouseLeave={(e) => e.target.style.color = theme.colors.text.secondary}
+            >
+              Features
+            </a>
+            <a href="#templates" 
+               onClick={(e) => {
+                 e.preventDefault();
+                 document.getElementById('templates').scrollIntoView({ behavior: 'smooth' });
+               }}
+               style={{ 
+                 color: theme.colors.text.secondary, 
+                 textDecoration: 'none',
+                 fontWeight: '500',
+                 transition: 'color 0.2s ease',
+                 cursor: 'pointer'
+               }}
+               onMouseEnter={(e) => e.target.style.color = theme.colors.primary}
+               onMouseLeave={(e) => e.target.style.color = theme.colors.text.secondary}
+            >
+              Templates
+            </a>
+            <a href="#opensource" 
+               onClick={(e) => {
+                 e.preventDefault();
+                 document.getElementById('opensource').scrollIntoView({ behavior: 'smooth' });
+               }}
+               style={{ 
+                 color: theme.colors.text.secondary, 
+                 textDecoration: 'none',
+                 fontWeight: '500',
+                 transition: 'color 0.2s ease',
+                 cursor: 'pointer'
+               }}
+               onMouseEnter={(e) => e.target.style.color = theme.colors.primary}
+               onMouseLeave={(e) => e.target.style.color = theme.colors.text.secondary}
+            >
+              Open Source
+            </a>
+          </nav>
+          <button
+            onClick={onGetStarted}
+            style={{
+              backgroundColor: theme.colors.primary,
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = theme.colors.button.hover;
+              e.target.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = theme.colors.primary;
+              e.target.style.transform = 'translateY(0)';
+            }}
+          >
+            Get Started
+          </button>
+        </div>
       </header>
 
       {/* Hero Section */}
       <section style={{ 
-        padding: '60px 20px',
-        textAlign: 'center',
-        maxWidth: '800px',
-        margin: '0 auto'
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between', // space-between to push content to top and bottom
+        alignItems: 'center',
+        position: 'relative',
+        width: '100%',
+        minHeight: '520px', // slightly taller for more space
+        maxWidth: '100vw',
+        overflow: 'hidden',
+        padding: 0,
+        margin: 0,
       }}>
-        <h1 style={{ 
-          fontSize: '3rem',
-          fontWeight: 'bold',
-          marginBottom: '20px',
-          color: theme.colors.text.primary
+        {/* Heading at the very top */}
+        <div style={{ 
+          position: 'relative', 
+          zIndex: 1, 
+          width: '100%',
+          maxWidth: '800px',
+          padding: '0px 20px 0 20px', // 0px from top (50px higher)
+          textAlign: 'center',
         }}>
-          Visual Workflow Automation
-        </h1>
-        <p style={{ 
-          fontSize: '1.2rem',
-          color: theme.colors.text.secondary,
-          marginBottom: '40px',
-          lineHeight: '1.6'
+          <h1 style={{ 
+            fontSize: '3rem',
+            fontWeight: 'bold',
+            marginBottom: '20px',
+            color: theme.colors.text.primary
+          }}>
+            Flowly – No Code. No Limits.
+          </h1>
+        </div>
+        {/* Animation in the center, absolutely positioned to fill section */}
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
+          <HeroFlowAnimation />
+        </div>
+        {/* Description and button at the very bottom */}
+        <div style={{ 
+          position: 'relative', 
+          zIndex: 1, 
+          width: '100%',
+          maxWidth: '800px',
+          padding: '0 20px 60px 20px', // 60px from bottom
+          textAlign: 'center',
         }}>
-          Build powerful automation workflows with our intuitive drag-and-drop interface. 
-          Start with pre-built templates or create custom workflows from scratch.
-        </p>
-        <button
-          onClick={onGetStarted}
-          style={{
-            backgroundColor: theme.colors.primary,
-            color: 'white',
-            border: 'none',
-            padding: '15px 30px',
-            borderRadius: '8px',
-            fontSize: '1.1rem',
-            fontWeight: '600',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            margin: '0 auto'
-          }}
-        >
-          <Play size={20} />
-          Start Building
-        </button>
+          <p style={{ 
+            fontSize: '1.2rem',
+            color: theme.colors.text.secondary,
+            marginBottom: '40px',
+            lineHeight: '1.6'
+          }}>
+           Turn your needs, ideas, and problems into intelligent, AI-powered solutions with Flowly.
+Think it. Plan it. Drag it. With Flowly’s no-code and AI-driven builder, anyone can create powerful workflows—this is the future where everyone can code without coding.
+          </p>
+          <button
+            onClick={onGetStarted}
+            style={{
+              backgroundColor: theme.colors.primary,
+              color: 'white',
+              border: 'none',
+              padding: '15px 30px',
+              borderRadius: '8px',
+              fontSize: '1.1rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              margin: '0 auto'
+            }}
+          >
+            <Play size={20} />
+            Start Building
+          </button>
+        </div>
       </section>
 
       {/* Features Section */}
-      <section style={{ 
+      <section id="features" style={{ 
         padding: '60px 20px',
         backgroundColor: theme.colors.surface,
-        marginTop: '40px'
+        marginTop: '0'
       }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
           <h2 style={{ 
@@ -188,7 +284,7 @@ const LandingPage = ({ onGetStarted }) => {
       </section>
 
       {/* Templates Section */}
-      <section style={{ 
+      <section id="templates" style={{ 
         padding: '60px 20px',
         backgroundColor: theme.colors.background
       }}>
@@ -292,7 +388,7 @@ const LandingPage = ({ onGetStarted }) => {
       </section>
 
       {/* Open Source Section */}
-      <section style={{ 
+      <section id="opensource" style={{ 
         padding: '60px 20px',
         backgroundColor: theme.colors.surface,
         textAlign: 'center'
