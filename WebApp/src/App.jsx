@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import Header from './components/Header/Header';
 import Sidebar from './components/Sidebar/Sidebar';
 import FlowCanvas from './components/FlowCanvas/FlowCanvas';
@@ -11,9 +12,23 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { validateAllNodes, getValidationSummary } from './utils/validation';
 import { executeGraph, processApiResults, streamGraphExecution } from './services/workflowService';
 import { APP_NAME } from './utils/constants';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import { AuthProvider } from './contexts/AuthContext';
 
-function AppContent() {
-  const [currentPage, setCurrentPage] = useState('landing'); // 'landing' or 'builder'
+// Landing Page Component
+function LandingPageComponent() {
+  const navigate = useNavigate();
+  
+  const handleGetStarted = () => {
+    navigate('/app');
+  };
+
+  return <LandingPage onGetStarted={handleGetStarted} />;
+}
+
+// App Page Component (Workflow Builder)
+function AppPageComponent() {
+  const navigate = useNavigate();
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [newNode, setNewNode] = useState(null);
@@ -22,12 +37,8 @@ function AppContent() {
   const { theme } = useTheme();
   const [isExecuting, setIsExecuting] = useState(false);
 
-  const handleGetStarted = () => {
-    setCurrentPage('builder');
-  };
-
   const handleBackToHome = () => {
-    setCurrentPage('landing');
+    navigate('/');
   };
 
   const handleAddNode = useCallback((nodeData) => {
@@ -464,57 +475,51 @@ function AppContent() {
       color: theme.colors.text.primary,
       transition: 'all 0.3s ease'
     }}>
-      {currentPage === 'landing' ? (
-        <LandingPage onGetStarted={handleGetStarted} />
-      ) : (
-        <>
-          <Header 
-            onSave={()=>{}}
-            onOpen={()=>{}}
-            onImport={handleImport}
-            onExport={handleExport}
-            onValidate={handleValidateFlow}
-            onClear={handleClear}
-            onValidateStream={handleValidateFlowStream}
-            onBackToHome={handleBackToHome}
+      <Header 
+        onSave={()=>{}}
+        onOpen={()=>{}}
+        onImport={handleImport}
+        onExport={handleExport}
+        onValidate={handleValidateFlow}
+        onClear={handleClear}
+        onValidateStream={handleValidateFlowStream}
+        onBackToHome={handleBackToHome}
+      />
+      
+      <div style={{ 
+        display: 'flex', 
+        flex: 1,
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          flex: 1,
+          marginLeft: isSidebarOpen ? '280px' : '0',
+          marginRight: isConfigPanelOpen ? '400px' : '0',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}>
+          <FlowCanvas
+            nodes={nodes}
+            setNodes={setNodes}
+            edges={edges}
+            setEdges={setEdges}
+            newNode={newNode}
+            onDeleteNode={handleDeleteNode}
+            isExecuting={isExecuting}
           />
-          
-          <div style={{ 
-            display: 'flex', 
-            flex: 1,
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              flex: 1,
-              marginLeft: isSidebarOpen ? '280px' : '0',
-              marginRight: isConfigPanelOpen ? '400px' : '0',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}>
-              <FlowCanvas
-                nodes={nodes}
-                setNodes={setNodes}
-                edges={edges}
-                setEdges={setEdges}
-                newNode={newNode}
-                onDeleteNode={handleDeleteNode}
-                isExecuting={isExecuting}
-              />
-            </div>
-          </div>
-          
-          <Sidebar 
-            onAddNode={handleAddNode}
-            isOpen={isSidebarOpen}
-            onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-            onLoadTemplate={handleLoadTemplate}
-          />
-          
-          <ConfigPanel 
-            isOpen={isConfigPanelOpen}
-            onToggle={() => setIsConfigPanelOpen(!isConfigPanelOpen)}
-          />
-        </>
-      )}
+        </div>
+      </div>
+      
+      <Sidebar 
+        onAddNode={handleAddNode}
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        onLoadTemplate={handleLoadTemplate}
+      />
+      
+      <ConfigPanel 
+        isOpen={isConfigPanelOpen}
+        onToggle={() => setIsConfigPanelOpen(!isConfigPanelOpen)}
+      />
       
       <ToastContainer 
         position="top-right" 
@@ -525,12 +530,33 @@ function AppContent() {
   );
 }
 
+// Main App Content with Routes
+function AppContent() {
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPageComponent />} />
+      <Route path="/app" element={<AppPageComponent />} />
+    </Routes>
+  );
+}
+
 export default function App() {
   return (
-    <ThemeProvider>
-      <ReactFlowProvider>
-        <AppContent />
-      </ReactFlowProvider>
-    </ThemeProvider>
+    <BrowserRouter>
+      <ThemeProvider>
+        <GoogleOAuthProvider 
+          clientId="990688959705-cpefpm71e76dr5381cr0k8qvakld8h05.apps.googleusercontent.com"
+          onScriptLoadError={() => {
+            console.error('Google OAuth script failed to load');
+          }}
+        >
+          <AuthProvider>
+            <ReactFlowProvider>
+              <AppContent />
+            </ReactFlowProvider>
+          </AuthProvider>
+        </GoogleOAuthProvider>
+      </ThemeProvider>
+    </BrowserRouter>
   );
 }

@@ -195,7 +195,7 @@ const LandingPage = ({ onGetStarted }) => {
           <p style={{ 
             fontSize: '1.2rem',
             color: theme.colors.text.secondary,
-            marginBottom: '40px',
+            marginBottom: '5px',
             lineHeight: '1.6'
           }}>
            Turn your needs, ideas, and problems into intelligent, AI-powered solutions with Flowly.
@@ -215,7 +215,8 @@ Think it. Plan it. Drag it. With Flowly’s no-code and AI-driven builder, anyon
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              margin: '0 auto'
+              margin: '0 auto',
+              marginBottom: '24px'
             }}
           >
             <Play size={20} />
