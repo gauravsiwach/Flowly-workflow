@@ -2,10 +2,11 @@ from pydantic import BaseModel
 from typing import Literal
 from openai import OpenAI
 import os
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
+import asyncio
+from redis_client import get_user_openai_key
 
-load_dotenv()
-client = OpenAI()
+# load_dotenv()
 
 class classifyMessageResponse(BaseModel):
     type: Literal["weather_query", "html_query"]
@@ -14,6 +15,8 @@ class classifyMessageResponse(BaseModel):
 def classify_query(state: dict) -> dict:
     print("🔀 classify_query...")
     query = state.get("node_result") or state.get("node_input")
+    if query is None:
+        query = ""
     SYSTEM_PROMPT = """
     You are a helpful ai assistant, and your job is to detect what is user's query is
     related to.
@@ -32,11 +35,19 @@ def classify_query(state: dict) -> dict:
         response:  {"type": "html_query", input: "www.google.com"}
 
     """
+    user_id = state.get("user_id")
+    openai_key = None
+    if user_id:
+        openai_key = sget_user_openai_key(user_id)
+    if not openai_key:
+        state["node_result"] = "Error: OpenAI key not found for user."
+        return state
+    client = OpenAI(api_key=openai_key)
     response = client.beta.chat.completions.parse(
         model="gpt-4.1-nano",
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": query}
+            {"role": "user", "content": str(query)}
         ],
         response_format=classifyMessageResponse
     )

@@ -1,17 +1,22 @@
 // Workflow service for handling all backend communication and workflow operations
 const API_BASE_URL = 'http://localhost:8000';
                     
+// Helper to get JWT token from localStorage
+const getJwtToken = () => localStorage.getItem('flowly_jwt_token');
+
 /**
  * Send graph data to backend for execution
  * @param {Object} graphData - The graph data to execute
  * @returns {Promise<Object>} - API response
  */
 export const executeGraph = async (graphData) => {
+  const token = getJwtToken();
   try {
     const response = await fetch(`${API_BASE_URL}/run-graph`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(graphData),
     });
@@ -89,9 +94,13 @@ export const processApiResults = (apiResults) => {
  * @returns {AsyncGenerator<Object>} - Async generator yielding each streamed result as JSON
  */
 export async function* streamGraphExecution(graphData) {
+  const token = getJwtToken();
   const response = await fetch(`${API_BASE_URL}/run-graph-stream`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
     body: JSON.stringify(graphData),
   });
   if (!response.body) throw new Error('No response body for streaming');

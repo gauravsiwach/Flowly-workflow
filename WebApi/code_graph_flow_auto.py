@@ -29,13 +29,14 @@ def execute_graph_flow_test(workflow_input, additional_input=None):
     return result
 
 
-def execute_graph_flow(workflow_input, additional_input=None):
+def execute_graph_flow(workflow_input, additional_input=None, user_id=None):
     state = {
          "node_input": None,
          "node_result": None,
          "node_id": None,
          "node_name": None,
-         "additional_input": additional_input or []
+         "additional_input": additional_input or [],
+         "user_id": user_id,
     }
     for step in workflow_input:
         if "node_input" in step:
@@ -61,13 +62,14 @@ def execute_graph_flow(workflow_input, additional_input=None):
     return {"results": results, "additional_input": state["additional_input"]}
 
 
-def execute_graph_flow_stream(workflow_input, additional_input=None):
+def execute_graph_flow_stream(workflow_input, additional_input=None, user_id=None):
     state = {
          "node_input": None,
          "node_result": None,
          "node_id": "",
          "node_name": "",
-         "additional_input": additional_input or []
+         "additional_input": additional_input or [],
+         "user_id": user_id,
     }
     for node_input_config in workflow_input:
         if "node_input" in node_input_config:

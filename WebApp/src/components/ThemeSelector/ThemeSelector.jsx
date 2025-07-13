@@ -220,12 +220,12 @@ const ThemeSelector = () => {
           <div style={themesGridStyle}>
             {availableThemes.map((themeData) => {
               const isSelected = currentTheme === themeData.name;
-              console.log('Theme data:', {
-                name: themeData.name,
-                displayName: themeData.displayName,
-                primaryColor: themeData.colors.primary,
-                isSelected
-              });
+              // console.log('Theme data:', {
+              //   name: themeData.name,
+              //   displayName: themeData.displayName,
+              //   primaryColor: themeData.colors.primary,
+              //   isSelected
+              // });
               return (
                 <div
                   key={themeData.name}

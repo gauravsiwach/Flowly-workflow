@@ -51,7 +51,7 @@ function AppPageComponent() {
       toast.warning("⚠️ No nodes to validate");
       return;
     }
-    console.log('handleValidateFlow: Starting execution, setting isExecuting to true');
+    // console.log('handleValidateFlow: Starting execution, setting isExecuting to true');
     setIsExecuting(true);
     try {
       // First, validate all nodes
@@ -130,13 +130,13 @@ function AppPageComponent() {
         node_input: node.data.additional_input?.[node.data.title] || ''
       }));
 
-      console.log('handleValidateFlow: Sending API request');
+      // console.log('handleValidateFlow: Sending API request');
       // Send both graph_flowData and additional_input in the payload
       const apiResults = await executeGraph({
         graph_flowData: executionList,
         additional_input
       });
-      console.log('handleValidateFlow: API response received');
+      // console.log('handleValidateFlow: API response received');
       
       const { resultsArray, additionalInputArray } = processApiResults(apiResults);
       
@@ -167,7 +167,7 @@ function AppPageComponent() {
       console.error('❌ Flow execution error:', error);
       toast.error("❌ Failed to execute flow");
     } finally {
-      console.log('handleValidateFlow: Execution complete, setting isExecuting to false');
+      // console.log('handleValidateFlow: Execution complete, setting isExecuting to false');
       setIsExecuting(false);
     }
   }, [nodes, edges]);

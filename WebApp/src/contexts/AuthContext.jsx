@@ -56,16 +56,17 @@ export const AuthProvider = ({ children }) => {
 
   // Login with Google credential
   const loginWithGoogle = async (credentialResponse) => {
-    console.log('Login response:', credentialResponse);
+    // console.log('Login response:', credentialResponse);
     
     if (credentialResponse && credentialResponse.access_token) {
       try {
         // Send access token to backend for verification
         const backendData = await getUserProfile(credentialResponse.access_token);
-        console.log('Backend user profile response:', backendData);
+        // console.log('Backend user profile response:', backendData);
         
         if (backendData.status === 'success') {
           const userData = {
+            ...backendData.user,
             name: backendData.user.name,
             email: backendData.user.email,
             picture: backendData.user.picture,
@@ -74,14 +75,14 @@ export const AuthProvider = ({ children }) => {
             email_verified: backendData.user.email_verified,
             access_token: credentialResponse.access_token,
             is_new_user: backendData.is_new_user || false,
-            ...backendData.user
+            openai_key_saved: backendData.openai_key_saved,
           };
           
           // Save user data and JWT token
           setUser(userData);
           localStorage.setItem('flowly_user', JSON.stringify(userData));
           localStorage.setItem('flowly_jwt_token', backendData.jwt_token);
-          console.log(`User logged in via backend with JWT token: ${backendData.is_new_user ? 'NEW USER' : 'EXISTING USER'}`, userData);
+          // console.log(`User logged in via backend with JWT token: ${backendData.is_new_user ? 'NEW USER' : 'EXISTING USER'}`, userData);
         } else {
           throw new Error('Backend user profile request failed');
         }
@@ -113,7 +114,7 @@ export const AuthProvider = ({ children }) => {
           
           setUser(userData);
           localStorage.setItem('flowly_user', JSON.stringify(userData));
-          console.log('User logged in (fallback):', userData);
+          // console.log('User logged in (fallback):', userData);
         } catch (fallbackError) {
           console.error('Error in fallback authentication:', fallbackError);
           alert('Error processing login response. Please try again.');
@@ -136,7 +137,7 @@ export const AuthProvider = ({ children }) => {
         
         setUser(userData);
         localStorage.setItem('flowly_user', JSON.stringify(userData));
-        console.log('User logged in:', userData);
+        // console.log('User logged in:', userData);
       } catch (error) {
         console.error('Error decoding JWT:', error);
         alert('Error processing login response. Please try again.');
@@ -152,7 +153,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     localStorage.removeItem('flowly_user');
     localStorage.removeItem('flowly_jwt_token');
-    console.log('User logged out');
+    // console.log('User logged out');
   };
 
   // Get JWT token for API calls

@@ -50,7 +50,7 @@ const FlowCanvas = ({ nodes, setNodes, edges, setEdges, newNode, onDeleteNode, i
   const nodeTypes = useMemo(() => {
     return {
       custom: (props) => {
-        console.log('FlowCanvas nodeTypes wrapper:', { nodeId: props.id, isExecuting });
+        // console.log('FlowCanvas nodeTypes wrapper:', { nodeId: props.id, isExecuting });
         return (
           <CustomNode {...props} setNodes={setNodes} onShowResult={handleShowResult} isExecuting={isExecuting} />
         );

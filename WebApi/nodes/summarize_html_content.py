@@ -1,13 +1,24 @@
 from openai import OpenAI
 import os
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
+import asyncio
+from redis_client import get_user_openai_key
 
-load_dotenv()
-client = OpenAI()
+# load_dotenv()
 
 def summarize_html_content(state: dict) -> dict:
     print("📝 summarize_html_content...")
     content = state.get("node_result") or state.get("node_input")
+    if content is None:
+        content = ""
+    user_id = state.get("user_id")
+    openai_key = None
+    if user_id:
+        openai_key = sget_user_openai_key(user_id)
+    if not openai_key:
+        state["node_result"] = "Error: OpenAI key not found for user."
+        return state
+    client = OpenAI(api_key=openai_key)
     SYSTEM_PROMPT = """
     You are a helpful assistant. Summarize the following text into a few key points:
     add some desc or key point if content not found some meaning full.

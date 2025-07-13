@@ -2,14 +2,17 @@ const API_BASE_URL = 'http://localhost:8000';
 
 export const getUserProfile = async (accessToken) => {
   try {
+    const token = localStorage.getItem('flowly_jwt_token');
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     const response = await fetch(`${API_BASE_URL}/user-profile`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        access_token: accessToken
-      })
+      headers,
+      body: JSON.stringify({ access_token: accessToken }),
     });
 
     if (!response.ok) {

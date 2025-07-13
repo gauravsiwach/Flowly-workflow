@@ -27,6 +27,11 @@ const Header = ({ onSave, onImport, onExport, onValidate, onValidateStream, onCl
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [userMenuOpen]);
 
+  // Ensure user menu is closed after login/logout
+  useEffect(() => {
+    setUserMenuOpen(false);
+  }, [isAuthenticated]);
+
   const headerStyle = {
     height: '48px',
     background: theme.colors.surface,
@@ -389,7 +394,7 @@ const Header = ({ onSave, onImport, onExport, onValidate, onValidateStream, onCl
                   borderRadius: '4px',
                   marginBottom: '8px'
                 }}>
-                  <div>Google ID: {user.sub}</div>
+                  <div>User ID: {user.sub}</div>
                   <div>Verified: {user.email_verified ? 'Yes' : 'No'}</div>
                 </div>
                 <button

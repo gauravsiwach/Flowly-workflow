@@ -21,11 +21,12 @@ const ConfigPanel = ({ isOpen, onToggle }) => {
     setIsSaving(true);
     setSaveStatus(null);
     try {
+      const token = localStorage.getItem('flowly_jwt_token');
       const response = await fetch(`${API_BASE_URL}/user/update-config`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getJwtToken()}`
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ openai_api_key: openaiKey })
       });

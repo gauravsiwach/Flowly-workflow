@@ -10,7 +10,7 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult, is
   const [isValidating, setIsValidating] = useState(false);
 
   // Debug logging
-  console.log('CustomNode render:', { id, isExecuting, hasResult: !!data.node_result });
+  // console.log('CustomNode render:', { id, isExecuting, hasResult: !!data.node_result });
 
   const handleInputChange = (e) => {
     e.stopPropagation(); // important to prevent drag instead of typing

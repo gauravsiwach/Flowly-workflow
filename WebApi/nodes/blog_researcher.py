@@ -2,13 +2,14 @@ import os
 import json
 from langchain.tools.ddg_search import DuckDuckGoSearchRun
 from openai import OpenAI
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 import requests
 from bs4 import BeautifulSoup, Tag
 import time
+import asyncio
+from redis_client import get_user_openai_key
 
-load_dotenv()
-client = OpenAI()
+# load_dotenv()
 
 def fetch_first_duckduckgo_result(query):
     url = "https://html.duckduckgo.com/html/"
@@ -96,6 +97,14 @@ def blog_researcher(state: dict) -> dict:
         - Brief Introduction
         - Key Findings (bullet points)
         """
+    user_id = state.get("user_id")
+    openai_key = None
+    if user_id:
+        openai_key = get_user_openai_key(user_id)
+    if not openai_key:
+        state["node_result"] = "Error: OpenAI key not found for user."
+        return state
+    client = OpenAI(api_key=openai_key)
     try:
         response = client.chat.completions.create(
             model="gpt-4.1-mini",

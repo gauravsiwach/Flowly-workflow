@@ -232,3 +232,13 @@ async def delete_openai_key(user_id: str) -> bool:
     except Exception as e:
         print(f"❌ Error deleting OpenAI key: {e}")
         return False
+
+async def get_user_openai_key(user_id: str) -> Optional[str]:
+    """
+    Fetch and decrypt the OpenAI API key for a given user_id from Redis.
+    Returns the decrypted key as a string, or None if not found.
+    """
+    obj = await get_api_key(user_id, "openai")
+    if obj and obj.get("api_key"):
+        return obj["api_key"]
+    return None

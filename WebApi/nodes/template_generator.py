@@ -2,10 +2,11 @@ import os
 import json
 from datetime import datetime
 from openai import OpenAI
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
+import asyncio
+from redis_client import get_user_openai_key
 
-load_dotenv()
-client = OpenAI()
+# load_dotenv()
 
 def template_generator(state: dict) -> dict:
     """Node: Template_Generator. Fetches an HTML template from a URL (from additional_input) and fills it with input content using LLM."""
@@ -54,6 +55,14 @@ use the RAG as title
 
 Return the complete HTML page.
 """
+        user_id = state.get("user_id")
+        openai_key = None
+        if user_id:
+            openai_key = sget_user_openai_key(user_id)
+        if not openai_key:
+            state["node_result"] = "Error: OpenAI key not found for user."
+            return state
+        client = OpenAI(api_key=openai_key)
         try:
             response = client.chat.completions.create(
                 model="gpt-4.1-mini",
