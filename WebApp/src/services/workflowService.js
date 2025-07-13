@@ -1,5 +1,4 @@
-// Workflow service for handling all backend communication and workflow operations
-const API_BASE_URL = 'http://localhost:8000';
+import { API_BASE_URL } from '../config_definitions/api_config';
                     
 // Helper to get JWT token from localStorage
 const getJwtToken = () => localStorage.getItem('flowly_jwt_token');

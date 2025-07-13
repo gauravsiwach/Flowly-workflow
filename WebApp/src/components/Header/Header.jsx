@@ -7,7 +7,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../contexts/AuthContext';
 import { useState, useRef, useEffect } from 'react';
 
-const Header = ({ onSave, onImport, onExport, onValidate, onValidateStream, onClear, onBackToHome }) => {
+const Header = ({ onSave, onOpen, onImport, onExport, onValidate, onValidateStream, onClear, onBackToHome, disableSave }) => {
   const { theme } = useTheme();
   const { user, loginWithGoogle, logout, isAuthenticated } = useAuth();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -252,14 +252,23 @@ const Header = ({ onSave, onImport, onExport, onValidate, onValidateStream, onCl
         <button
           className="header-button"
           onClick={handleSave}
-          style={buttonStyle}
+          style={{
+            ...buttonStyle,
+            opacity: disableSave ? 0.5 : 1,
+            cursor: disableSave ? 'not-allowed' : 'pointer',
+          }}
+          disabled={disableSave}
           onMouseEnter={(e) => {
-            e.target.style.background = theme.colors.button.hover;
-            e.target.style.transform = 'translateY(-1px)';
+            if (!disableSave) {
+              e.target.style.background = theme.colors.button.hover;
+              e.target.style.transform = 'translateY(-1px)';
+            }
           }}
           onMouseLeave={(e) => {
-            e.target.style.background = theme.colors.button.primary;
-            e.target.style.transform = 'translateY(0)';
+            if (!disableSave) {
+              e.target.style.background = theme.colors.button.primary;
+              e.target.style.transform = 'translateY(0)';
+            }
           }}
         >
           <Save size={14} />
@@ -296,6 +305,7 @@ const Header = ({ onSave, onImport, onExport, onValidate, onValidateStream, onCl
 
         <button
           className="header-button"
+          onClick={onOpen}
           style={secondaryButtonStyle}
           onMouseEnter={(e) => {
             e.target.style.background = theme.colors.border;

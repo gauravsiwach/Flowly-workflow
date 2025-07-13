@@ -13,7 +13,9 @@ import { validateAllNodes, getValidationSummary } from './utils/validation';
 import { executeGraph, processApiResults, streamGraphExecution } from './services/workflowService';
 import { APP_NAME } from './utils/constants';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Modal from './components/Modal/Modal';
+import { FolderOpen, Trash2, Search } from 'lucide-react';
 
 // Landing Page Component
 function LandingPageComponent() {
@@ -36,6 +38,14 @@ function AppPageComponent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { theme } = useTheme();
   const [isExecuting, setIsExecuting] = useState(false);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [workflowName, setWorkflowName] = useState('');
+  const { user } = useAuth();
+  const [isOpenModalOpen, setIsOpenModalOpen] = useState(false);
+  const [savedWorkflows, setSavedWorkflows] = useState([]);
+  const [isLoadingWorkflows, setIsLoadingWorkflows] = useState(false);
+  const [loadError, setLoadError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleBackToHome = () => {
     navigate('/');
@@ -380,7 +390,8 @@ function AppPageComponent() {
       }
     };
 
-    toast.success("✅ Flow exported successfully!");
+    // Remove the export toast here to avoid double toast on save
+    // toast.success("✅ Flow exported successfully!");
     return exportData;
   }, [nodes, edges]);
 
@@ -429,6 +440,47 @@ function AppPageComponent() {
     setEdges(templateEdges);
   }, [setNodes, setEdges, handleNodeInputChange, handleDeleteNode]);
 
+  const handleSave = useCallback(() => {
+    if (nodes.length === 0) {
+      toast.warning('⚠️ No nodes to save');
+      return;
+    }
+    setIsSaveModalOpen(true);
+  }, [nodes]);
+
+  const handleSaveWorkflow = async () => {
+    if (nodes.length === 0) {
+      toast.warning('⚠️ No nodes to save');
+      setIsSaveModalOpen(false);
+      return;
+    }
+    if (!workflowName.trim()) return;
+    // Prepare workflow data
+    const exportData = handleExport();
+    if (!exportData) return;
+    // Send to backend
+    try {
+      const token = localStorage.getItem('flowly_jwt_token');
+      const response = await fetch('http://localhost:8000/user/save-workflow', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: workflowName,
+          data: exportData,
+        })
+      });
+      if (!response.ok) throw new Error('Failed to save workflow');
+      toast.success('✅ Workflow saved!');
+      setIsSaveModalOpen(false);
+      setWorkflowName('');
+    } catch (e) {
+      toast.error('❌ Failed to save workflow');
+    }
+  };
+
   const getOrderedNodeListWithSeq = (edges) => {
     const nodeMap = {};
     const nextMap = {};
@@ -466,6 +518,81 @@ function AppPageComponent() {
     return orderedNodes;
   };
 
+  // Fetch saved workflows from backend
+  const fetchSavedWorkflows = async () => {
+    setIsLoadingWorkflows(true);
+    setLoadError(null);
+    try {
+      const token = localStorage.getItem('flowly_jwt_token');
+      const response = await fetch('http://localhost:8000/user/list-workflows', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch workflows');
+      const data = await response.json();
+      setSavedWorkflows(data.workflows || []);
+    } catch (e) {
+      setLoadError('Failed to load workflows');
+      setSavedWorkflows([]);
+    } finally {
+      setIsLoadingWorkflows(false);
+    }
+  };
+
+  const handleOpen = useCallback(() => {
+    setIsOpenModalOpen(true);
+    setSearchTerm(""); // Clear search box on open
+    fetchSavedWorkflows();
+  }, []);
+
+  const handleLoadWorkflow = (workflow) => {
+    if (!workflow || !workflow.data) return;
+    const { nodes: loadedNodes, edges: loadedEdges } = workflow.data;
+    if (!Array.isArray(loadedNodes) || !Array.isArray(loadedEdges)) {
+      toast.error('❌ Invalid workflow data');
+      return;
+    }
+    // Re-attach handlers to each node
+    const nodesWithHandlers = loadedNodes.map(node => ({
+      ...node,
+      data: {
+        ...node.data,
+        onDelete: handleDeleteNode,
+        onChange: handleNodeInputChange,
+      }
+    }));
+    setNodes(nodesWithHandlers);
+    setEdges(loadedEdges);
+    setIsOpenModalOpen(false);
+    toast.success(`✅ Loaded: ${workflow.name}`);
+  };
+
+  // Delete a workflow by ID
+  const handleDeleteWorkflow = async (workflowId) => {
+    if (!window.confirm('Are you sure you want to delete this workflow? This action cannot be undone.')) return;
+    try {
+      const token = localStorage.getItem('flowly_jwt_token');
+      const response = await fetch(`http://localhost:8000/user/delete-workflow/${workflowId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to delete workflow');
+      setSavedWorkflows((prev) => prev.filter(wf => wf.workflow_id !== workflowId));
+      toast.success('✅ Workflow deleted');
+    } catch (e) {
+      toast.error('❌ Failed to delete workflow');
+    }
+  };
+
+  // Filtered workflows for search
+  const filteredWorkflows = savedWorkflows.filter(wf =>
+    wf.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div style={{ 
       display: 'flex', 
@@ -476,8 +603,9 @@ function AppPageComponent() {
       transition: 'all 0.3s ease'
     }}>
       <Header 
-        onSave={()=>{}}
-        onOpen={()=>{}}
+        onSave={handleSave}
+        onOpen={handleOpen}
+        disableSave={nodes.length === 0}
         onImport={handleImport}
         onExport={handleExport}
         onValidate={handleValidateFlow}
@@ -526,6 +654,122 @@ function AppPageComponent() {
         autoClose={3000}
         theme={theme.name === 'dark' ? 'dark' : 'light'}
       />
+
+      <Modal
+        isOpen={isSaveModalOpen}
+        title="Save Workflow"
+        onClose={() => setIsSaveModalOpen(false)}
+        onSubmit={handleSaveWorkflow}
+        submitLabel="Save"
+        disabled={nodes.length === 0}
+        // No fixed height or scroll for Save modal
+      >
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ fontWeight: 500 }}>Workflow Name</label>
+          <input
+            type="text"
+            value={workflowName}
+            onChange={e => setWorkflowName(e.target.value)}
+            placeholder="Enter workflow name"
+            style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #ccc', marginTop: 8 }}
+            autoFocus
+          />
+        </div>
+      </Modal>
+      <Modal
+        isOpen={isOpenModalOpen}
+        title="Open Workflow"
+        onClose={() => setIsOpenModalOpen(false)}
+        onSubmit={() => setIsOpenModalOpen(false)}
+        submitLabel="Close"
+        modalWidth={480}
+        contentHeight={500}
+        scrollableContent={true}
+      >
+        <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Search size={18} style={{ color: theme.colors.text.secondary }} />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            placeholder="Search workflows by name..."
+            style={{
+              flex: 1,
+              padding: '8px 12px',
+              borderRadius: 6,
+              border: `1px solid ${theme.colors.border}`,
+              fontSize: 14,
+              background: theme.colors.background,
+              color: theme.colors.text.primary,
+            }}
+          />
+        </div>
+        {isLoadingWorkflows ? (
+          <div style={{ padding: 24, textAlign: 'center' }}>Loading...</div>
+        ) : loadError ? (
+          <div style={{ color: 'red', padding: 24 }}>{loadError}</div>
+        ) : filteredWorkflows.length === 0 ? (
+          <div style={{ padding: 24, color: theme.colors.text.secondary }}>No saved workflows found.</div>
+        ) : (
+          <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+            {filteredWorkflows.map(wf => (
+              <div key={wf.workflow_id} style={{
+                padding: '12px 0',
+                borderBottom: `1px solid ${theme.colors.border}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+              }}>
+                <div>
+                  <div style={{ fontWeight: 500, color: theme.colors.text.primary }}>{wf.name}</div>
+                  <div style={{ fontSize: 12, color: theme.colors.text.secondary }}>{new Date(Number(wf.created_at) * 1000).toLocaleString()}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    title="Load"
+                    style={{
+                      background: theme.colors.button.primary,
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: 36,
+                      height: 36,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                    onClick={() => handleLoadWorkflow(wf)}
+                  >
+                    <FolderOpen size={18} />
+                  </button>
+                  <button
+                    title="Delete"
+                    style={{
+                      background: '#ef4444',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: 36,
+                      height: 36,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                    onClick={() => handleDeleteWorkflow(wf.workflow_id)}
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
@@ -543,20 +787,20 @@ function AppContent() {
 export default function App() {
   return (
     <BrowserRouter>
-      <ThemeProvider>
-        <GoogleOAuthProvider 
-          clientId="990688959705-cpefpm71e76dr5381cr0k8qvakld8h05.apps.googleusercontent.com"
-          onScriptLoadError={() => {
-            console.error('Google OAuth script failed to load');
-          }}
-        >
-          <AuthProvider>
+      <GoogleOAuthProvider 
+        clientId="990688959705-cpefpm71e76dr5381cr0k8qvakld8h05.apps.googleusercontent.com"
+        onScriptLoadError={() => {
+          console.error('Google OAuth script failed to load');
+        }}
+      >
+        <AuthProvider>
+          <ThemeProvider>
             <ReactFlowProvider>
               <AppContent />
             </ReactFlowProvider>
-          </AuthProvider>
-        </GoogleOAuthProvider>
-      </ThemeProvider>
+          </ThemeProvider>
+        </AuthProvider>
+      </GoogleOAuthProvider>
     </BrowserRouter>
   );
 }

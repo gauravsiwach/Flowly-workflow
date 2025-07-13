@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 from cryptography.fernet import Fernet
+import uuid
 
 load_dotenv()
 
@@ -58,13 +59,13 @@ async def get_redis_client() -> redis.Redis:
             raise
     return redis_client
 
-async def store_user_profile(user_id: str, user_data: Dict[str, Any], expiry: int = 86400) -> bool:
+async def store_user_profile(user_id: str, user_data: Dict[str, Any]) -> bool:
     try:
         client = await get_redis_client()
         key = f"user:{user_id}"
         value = json.dumps(user_data)
-        print(f"🔄 Storing key={key}, expiry={expiry}, value={value[:100]}...")  # Trim long tokens for log
-        await client.setex(name=key, time=int(expiry), value=value)
+        print(f"🔄 Storing key={key}, value={value[:100]}...")  # Trim long tokens for log
+        await client.set(name=key, value=value)
         print(f"✅ User profile stored in Redis: {user_id}")
         return True
     except Exception as e:
@@ -88,15 +89,14 @@ async def get_user_profile(user_id: str) -> Optional[Dict[str, Any]]:
         print(f"❌ Error retrieving user profile from Redis: {e}")
         return None
 
-async def update_user_profile(user_id: str, user_data: Dict[str, Any], expiry: int = 86400) -> bool:
+async def update_user_profile(user_id: str, user_data: Dict[str, Any]) -> bool:
     """
     Update user profile in Redis
     """
     try:
         client = await get_redis_client()
         key = f"user:{user_id}"
-        expiry_int = int(expiry)
-        await client.setex(key, expiry_int, json.dumps(user_data))
+        await client.set(key, json.dumps(user_data))
         print(f"✅ User profile updated in Redis: {user_id}")
         return True
     except Exception as e:
@@ -117,7 +117,7 @@ async def delete_user_profile(user_id: str) -> bool:
         print(f"❌ Error deleting user profile from Redis: {e}")
         return False
 
-async def store_api_key(user_id: str, service_name: str, api_key: str, key_name: Optional[str] = None, expiry: int = 86400) -> bool:
+async def store_api_key(user_id: str, service_name: str, api_key: str, key_name: Optional[str] = None) -> bool:
     """
     Store API key for user in Redis
     """
@@ -131,8 +131,7 @@ async def store_api_key(user_id: str, service_name: str, api_key: str, key_name:
             "key_name": key_name or service_name,
             "created_at": str(int(time.time()))
         }
-        expiry_int = int(expiry)
-        await client.setex(key, expiry_int, json.dumps(data))  # 24 hour expiry
+        await client.set(key, json.dumps(data))
         print(f"✅ API key stored in Redis for user: {user_id}, service: {service_name}")
         return True
     except Exception as e:
@@ -194,7 +193,7 @@ async def delete_api_key(user_id: str, service_name: str) -> bool:
         print(f"❌ Error deleting API key from Redis: {e}")
         return False
 
-async def save_openai_key(user_id: str, openai_key: str, expiry: int = 86400) -> bool:
+async def save_openai_key(user_id: str, openai_key: str) -> bool:
     try:
         client = await get_redis_client()
         key = f"api_key:{user_id}:openai"
@@ -205,7 +204,7 @@ async def save_openai_key(user_id: str, openai_key: str, expiry: int = 86400) ->
             "api_key": encrypted_key,
             "created_at": str(int(time.time()))
         }
-        await client.setex(key, int(expiry), json.dumps(data))
+        await client.set(key, json.dumps(data))
         print(f"✅ OpenAI key (encrypted) saved for user: {user_id}")
         return True
     except Exception as e:
@@ -242,3 +241,96 @@ async def get_user_openai_key(user_id: str) -> Optional[str]:
     if obj and obj.get("api_key"):
         return obj["api_key"]
     return None
+
+async def save_user_workflow(user_id: str, name: str, data: dict) -> str:
+    """
+    Save a workflow for a user. Returns the workflow_id.
+    """
+    try:
+        client = await get_redis_client()
+        workflow_id = str(uuid.uuid4())
+        key = f"workflow:{user_id}:{workflow_id}"
+        workflow_data = {
+            "workflow_id": workflow_id,
+            "user_id": user_id,
+            "name": name,
+            "data": data,
+            "created_at": str(int(time.time()))
+        }
+        await client.set(key, json.dumps(workflow_data))
+        # Add workflow_id to user's workflow set for listing
+        await client.sadd(f"workflows:{user_id}", workflow_id)
+        return workflow_id
+    except Exception as e:
+        print(f"❌ Error saving workflow: {e}")
+        return ""
+
+async def get_user_workflows(user_id: str) -> list:
+    """
+    Get all workflows for a user.
+    """
+    try:
+        client = await get_redis_client()
+        workflow_ids = await client.smembers(f"workflows:{user_id}")
+        workflows = []
+        for workflow_id in workflow_ids:
+            key = f"workflow:{user_id}:{workflow_id}"
+            data = await client.get(key)
+            if data:
+                workflows.append(json.loads(data))
+        return workflows
+    except Exception as e:
+        print(f"❌ Error retrieving workflows: {e}")
+        return []
+
+async def delete_user_workflow(user_id: str, workflow_id: str) -> bool:
+    """
+    Delete a workflow for a user by workflow_id.
+    """
+    try:
+        client = await get_redis_client()
+        key = f"workflow:{user_id}:{workflow_id}"
+        await client.delete(key)
+        await client.srem(f"workflows:{user_id}", workflow_id)
+        print(f"✅ Workflow deleted: {workflow_id} for user: {user_id}")
+        return True
+    except Exception as e:
+        print(f"❌ Error deleting workflow: {e}")
+        return False
+
+async def save_user_theme(user_id: str, theme: str) -> bool:
+    """
+    Save the user's selected theme in their config in Redis.
+    """
+    try:
+        client = await get_redis_client()
+        key = f"user:{user_id}:config"
+        # Get existing config if any
+        config = {}
+        data = await client.get(key)
+        if data:
+            config = json.loads(data)
+        config['theme'] = theme
+        await client.set(key, json.dumps(config))
+        print(f"✅ Theme saved for user: {user_id} -> {theme}")
+        return True
+    except Exception as e:
+        print(f"❌ Error saving theme for user: {e}")
+        return False
+
+async def get_user_theme(user_id: str) -> str:
+    """
+    Get the user's selected theme from their config in Redis.
+    Returns the theme name as a string, or empty string if not set.
+    """
+    try:
+        client = await get_redis_client()
+        key = f"user:{user_id}:config"
+        data = await client.get(key)
+        if data:
+            config = json.loads(data)
+            return config.get('theme', '') or ''
+        return ''
+    except Exception as e:
+        print(f"❌ Error getting theme for user: {e}")
+        return ''

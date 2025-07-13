@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8000';
+import { API_BASE_URL } from '../config_definitions/api_config';
 
 export const getUserProfile = async (accessToken) => {
   try {
