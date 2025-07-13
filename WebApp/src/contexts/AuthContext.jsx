@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import { getUserProfile } from '../services/authService';
 
 const AuthContext = createContext();
 
@@ -26,12 +27,17 @@ export const AuthProvider = ({ children }) => {
     const loadUser = () => {
       try {
         const storedUser = localStorage.getItem('flowly_user');
-        if (storedUser) {
+        const storedToken = localStorage.getItem('flowly_jwt_token');
+        
+        if (storedUser && storedToken) {
           const userData = JSON.parse(storedUser);
-          if (userData.exp && isTokenExpired(userData.exp)) {
+          const tokenData = jwtDecode(storedToken);
+          
+          if (tokenData.exp && isTokenExpired(tokenData.exp)) {
             // Token expired, clear user
             setUser(null);
             localStorage.removeItem('flowly_user');
+            localStorage.removeItem('flowly_jwt_token');
           } else {
             setUser(userData);
           }
@@ -39,6 +45,7 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         console.error('Error loading user from localStorage:', error);
         localStorage.removeItem('flowly_user');
+        localStorage.removeItem('flowly_jwt_token');
       } finally {
         setIsLoading(false);
       }
@@ -53,35 +60,64 @@ export const AuthProvider = ({ children }) => {
     
     if (credentialResponse && credentialResponse.access_token) {
       try {
-        // Fetch user info using the access token
-        const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-          headers: {
-            'Authorization': `Bearer ${credentialResponse.access_token}`
-          }
-        });
+        // Send access token to backend for verification
+        const backendData = await getUserProfile(credentialResponse.access_token);
+        console.log('Backend user profile response:', backendData);
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch user info');
+        if (backendData.status === 'success') {
+          const userData = {
+            name: backendData.user.name,
+            email: backendData.user.email,
+            picture: backendData.user.picture,
+            sub: backendData.user.id, // Google user ID
+            exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+            email_verified: backendData.user.email_verified,
+            access_token: credentialResponse.access_token,
+            is_new_user: backendData.is_new_user || false,
+            ...backendData.user
+          };
+          
+          // Save user data and JWT token
+          setUser(userData);
+          localStorage.setItem('flowly_user', JSON.stringify(userData));
+          localStorage.setItem('flowly_jwt_token', backendData.jwt_token);
+          console.log(`User logged in via backend with JWT token: ${backendData.is_new_user ? 'NEW USER' : 'EXISTING USER'}`, userData);
+        } else {
+          throw new Error('Backend user profile request failed');
         }
-        
-        const userInfo = await response.json();
-        const userData = {
-          name: userInfo.name,
-          email: userInfo.email,
-          picture: userInfo.picture,
-          sub: userInfo.id, // Google user ID
-          exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
-          email_verified: userInfo.verified_email,
-          access_token: credentialResponse.access_token,
-          ...userInfo
-        };
-        
-        setUser(userData);
-        localStorage.setItem('flowly_user', JSON.stringify(userData));
-        console.log('User logged in:', userData);
       } catch (error) {
-        console.error('Error fetching user info:', error);
-        alert('Error processing login response. Please try again.');
+        console.error('Error with backend user profile request:', error);
+        // Fallback to frontend-only authentication
+        try {
+          const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+            headers: {
+              'Authorization': `Bearer ${credentialResponse.access_token}`
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to fetch user info');
+          }
+          
+          const userInfo = await response.json();
+          const userData = {
+            name: userInfo.name,
+            email: userInfo.email,
+            picture: userInfo.picture,
+            sub: userInfo.id, // Google user ID
+            exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+            email_verified: userInfo.verified_email,
+            access_token: credentialResponse.access_token,
+            ...userInfo
+          };
+          
+          setUser(userData);
+          localStorage.setItem('flowly_user', JSON.stringify(userData));
+          console.log('User logged in (fallback):', userData);
+        } catch (fallbackError) {
+          console.error('Error in fallback authentication:', fallbackError);
+          alert('Error processing login response. Please try again.');
+        }
       }
     } else if (credentialResponse && credentialResponse.credential) {
       // Handle JWT credential (fallback for other flows)
@@ -94,6 +130,7 @@ export const AuthProvider = ({ children }) => {
           sub: decoded.sub, // Google user ID
           exp: decoded.exp,
           email_verified: decoded.email_verified,
+          access_token: credentialResponse.access_token,
           ...decoded
         };
         
@@ -114,7 +151,44 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('flowly_user');
+    localStorage.removeItem('flowly_jwt_token');
     console.log('User logged out');
+  };
+
+  // Get JWT token for API calls
+  const getJwtToken = () => {
+    return localStorage.getItem('flowly_jwt_token');
+  };
+
+  // Refresh user profile from backend (after saving OpenAI key, etc)
+  const refreshUserProfile = async () => {
+    try {
+      const storedUser = localStorage.getItem('flowly_user');
+      const storedToken = localStorage.getItem('flowly_jwt_token');
+      if (storedUser && storedToken) {
+        const userData = JSON.parse(storedUser);
+        // Use the access_token from userData to re-fetch profile
+        if (userData.access_token) {
+          const backendData = await getUserProfile(userData.access_token);
+          if (backendData.status === 'success') {
+            const updatedUser = {
+              ...userData,
+              ...backendData.user,
+              openai_key_saved: backendData.openai_key_saved,
+              is_new_user: backendData.is_new_user || false,
+            };
+            setUser(updatedUser);
+            localStorage.setItem('flowly_user', JSON.stringify(updatedUser));
+            // Optionally update JWT if it changed
+            if (backendData.jwt_token) {
+              localStorage.setItem('flowly_jwt_token', backendData.jwt_token);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing user profile:', error);
+    }
   };
 
   const value = {
@@ -122,7 +196,9 @@ export const AuthProvider = ({ children }) => {
     isLoading,
     loginWithGoogle,
     logout,
-    isAuthenticated: !!user
+    getJwtToken,
+    isAuthenticated: !!user,
+    refreshUserProfile,
   };
 
   return (

@@ -1,11 +1,45 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Settings, X, ChevronLeft, ChevronRight, Database, Palette, Code, Shield, MessageSquare } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { Settings, X, ChevronLeft, ChevronRight, Database, Palette, Code, Shield, MessageSquare, CheckCircle, AlertTriangle } from 'lucide-react';
 import { APP_NAME } from '../../utils/constants';
+
+const API_BASE_URL = 'http://localhost:8000';
 
 const ConfigPanel = ({ isOpen, onToggle }) => {
   const { theme, fontSize, setFontSize, gridOpacity, setGridOpacity } = useTheme();
+  const { user, getJwtToken, isAuthenticated, loginWithGoogle, refreshUserProfile } = useAuth();
   const [activeTab, setActiveTab] = useState('general');
+  const [openaiKey, setOpenaiKey] = useState('');
+  const [saveStatus, setSaveStatus] = useState(null); // null | 'success' | 'error'
+  const [isSaving, setIsSaving] = useState(false);
+
+  const openaiKeySaved = user && user.openai_key_saved;
+
+  const handleSaveOpenaiKey = async () => {
+    if (!openaiKey) return;
+    setIsSaving(true);
+    setSaveStatus(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/user/update-config`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getJwtToken()}`
+        },
+        body: JSON.stringify({ openai_api_key: openaiKey })
+      });
+      if (!response.ok) throw new Error('Failed to save key');
+      setSaveStatus('success');
+      setOpenaiKey(''); // Clear input after save
+      // Refresh user profile (no reload)
+      await refreshUserProfile();
+    } catch (e) {
+      setSaveStatus('error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const panelStyle = {
     position: 'fixed',
@@ -190,24 +224,82 @@ const ConfigPanel = ({ isOpen, onToggle }) => {
           <Shield size={16} />
           Security Settings
         </div>
-        
         <div style={inputGroupStyle}>
-          <label style={labelStyle}>API Key</label>
-          <input
-            type="password"
-            placeholder="Enter your API key"
-            style={inputStyle}
-          />
+          <label style={labelStyle}>OpenAI Key</label>
+          <div style={{ position: 'relative', width: '100%', maxWidth: 340 }}>
+            <input
+              type="password"
+              placeholder={openaiKeySaved ? '' : 'Enter your OpenAI key'}
+              style={{
+                ...inputStyle,
+                paddingRight: 38, // space for icon
+                fontSize: 16,
+                border: `1.5px solid ${openaiKeySaved ? theme.colors.primary : theme.colors.border}`,
+                borderRadius: '8px',
+                background: openaiKeySaved ? theme.colors.surface : theme.colors.background,
+                color: theme.colors.text.primary,
+                letterSpacing: '2px',
+              }}
+              value={openaiKeySaved && !openaiKey ? '****************************************************' : openaiKey}
+              onChange={e => setOpenaiKey(e.target.value)}
+              autoComplete="off"
+              // input is always enabled now
+            />
+            {openaiKeySaved ? (
+              <CheckCircle
+                size={20}
+                color={theme.colors.primary}
+                style={{
+                  position: 'absolute',
+                  right: 12,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  pointerEvents: 'none',
+                  background: theme.colors.surface,
+                  borderRadius: '50%',
+                }}
+                title="Key saved"
+              />
+            ) : (
+              <AlertTriangle
+                size={20}
+                color={theme.colors.text.secondary}
+                style={{
+                  position: 'absolute',
+                  right: 12,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  pointerEvents: 'none',
+                  background: theme.colors.surface,
+                  borderRadius: '50%',
+                }}
+                title="Not saved"
+              />
+            )}
+          </div>
+          <button
+            style={{
+              marginTop: 12,
+              background: theme.colors.button.primary,
+              color: '#fff',
+              border: 'none',
+              borderRadius: 6,
+              padding: '8px 16px',
+              fontWeight: 500,
+              fontSize: 14,
+              cursor: isSaving || !openaiKey ? 'not-allowed' : 'pointer',
+              opacity: isSaving ? 0.7 : 1,
+              transition: 'all 0.2s',
+            }}
+            onClick={handleSaveOpenaiKey}
+            disabled={isSaving || !openaiKey}
+          >
+            {isSaving ? (openaiKeySaved ? 'Updating...' : 'Saving...') : (openaiKeySaved ? 'Update' : 'Save')}
+          </button>
+          <div style={{ fontSize: 12, color: theme.colors.text.secondary, marginTop: 10, marginLeft: 2 }}>
+            * This key is saved securely and will not be used for any other purpose.
+          </div>
         </div>
-
-        {/* <div style={inputGroupStyle}>
-          <label style={labelStyle}>Environment</label>
-          <select style={selectStyle} defaultValue="development">
-            <option value="development">Development</option>
-            <option value="staging">Staging</option>
-            <option value="production">Production</option>
-          </select>
-        </div> */}
       </div>
     </div>
   );

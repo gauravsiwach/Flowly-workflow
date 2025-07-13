@@ -1,10 +1,17 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Depends, Body
 from pydantic import BaseModel
 from typing import List, Optional
 from fastapi.middleware.cors import CORSMiddleware
 from code_graph_flow_auto import execute_graph_flow, execute_graph_flow_stream
 from fastapi.responses import StreamingResponse
 import json
+import os
+from dotenv import load_dotenv
+from user_profile import get_user_profile, UserProfileRequest
+from jwt_utils import get_current_user
+from redis_client import save_openai_key
+
+load_dotenv()
 
 app = FastAPI()
 
@@ -35,6 +42,13 @@ class GraphFlowRequest(BaseModel):
 def health_check():
     return {"status": "ok"}
 
+@app.post("/user-profile")
+async def get_user_profile_endpoint(request: UserProfileRequest):
+    """
+    Get user profile from access token (supports Google OAuth)
+    """
+    return await get_user_profile(request)
+
 @app.post("/run-graph")
 async def run_graph(payload: GraphFlowRequest):
     try:
@@ -57,6 +71,23 @@ async def run_graph_stream(payload: GraphFlowRequest):
         return StreamingResponse(execute_graph_flow_stream([item.model_dump() for item in user_input], [item.model_dump() for item in additional_input]), media_type="application/json")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/user/update-config")
+async def update_user_config(
+    data: dict = Body(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Update user config (OpenAI key) for the authenticated user
+    """
+    openai_key = data.get("openai_api_key")
+    if not openai_key:
+        raise HTTPException(status_code=400, detail="Missing openai_api_key in request body")
+    user_id = current_user["id"]
+    saved = await save_openai_key(user_id, openai_key)
+    if not saved:
+        raise HTTPException(status_code=500, detail="Failed to save OpenAI key")
+    return {"success": True}
 
 # uvicorn main:app --reload --host 0.0.0.0 --port 8000
 # uvicorn main:app --reload --host 0.0.0.0 --port 9000
