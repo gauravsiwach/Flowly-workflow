@@ -3,8 +3,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Settings, X, ChevronLeft, ChevronRight, Database, Palette, Code, Shield, MessageSquare, CheckCircle, AlertTriangle } from 'lucide-react';
 import { APP_NAME } from '../../utils/constants';
-
-const API_BASE_URL = 'http://localhost:8000';
+import { API_BASE_URL } from '../../config_definitions/api_config';
 
 const ConfigPanel = ({ isOpen, onToggle }) => {
   const { theme, fontSize, setFontSize, gridOpacity, setGridOpacity } = useTheme();

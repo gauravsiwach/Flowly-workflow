@@ -14,30 +14,33 @@ const LABEL_SETS = [
 ];
 
 function getUniqueColors(count) {
-  // Moderately saturated, lively palette (not neon, not pastel)
   const colors = [
-    '#3B82F6', // Blue
-    '#06B6D4', // Cyan
-    '#10B981', // Green
-    '#F59E42', // Orange
-    '#F43F5E', // Rose
-    '#A21CAF', // Purple
-    '#FBBF24', // Yellow
-    '#6366F1', // Indigo
-    '#EC4899', // Pink
-    '#22D3EE', // Light Cyan
-    '#F472B6', // Light Pink
-    '#84CC16', // Lime
+    '#3B82F6', '#06B6D4', '#10B981', '#F59E42', '#F43F5E', '#A21CAF', '#FBBF24', '#6366F1', '#EC4899', '#22D3EE', '#F472B6', '#84CC16',
   ];
-  // Shuffle and pick unique
   const shuffled = colors.sort(() => 0.5 - Math.random());
   return shuffled.slice(0, count);
 }
 
-function getRandomPosition(index) {
-  const top = 50 + index * 120 + Math.random() * 40;
-  const left = 50 + Math.random() * 100;
-  return { top, left };
+// Responsive position helper
+function getResponsivePositions(index, layout) {
+  if (layout === 'mobile') {
+    // Stack vertically, centered
+    return { top: 80 + index * 110 + Math.random() * 20, left: '50%' };
+  } else if (layout === 'tablet') {
+    // Spread horizontally, but closer
+    return { top: 80 + Math.random() * 30, left: 40 + index * 160 + Math.random() * 20 };
+  } else {
+    // Desktop: spread wide
+    return { top: 50 + index * 120 + Math.random() * 40, left: 50 + Math.random() * 100 };
+  }
+}
+
+function getLayout() {
+  if (typeof window === 'undefined') return 'desktop';
+  const w = window.innerWidth;
+  if (w < 600) return 'mobile';
+  if (w < 900) return 'tablet';
+  return 'desktop';
 }
 
 export default function HeroFlowAnimation() {
@@ -48,9 +51,17 @@ export default function HeroFlowAnimation() {
   const animationFrame = useRef();
   const [cycle, setCycle] = useState(0);
   const [showConnectors, setShowConnectors] = useState(true);
-  const [visibleArrows, setVisibleArrows] = useState([false, false]); // For fade-in
+  const [visibleArrows, setVisibleArrows] = useState([false, false]);
   const [zonesWithBlob, setZonesWithBlob] = useState([false, false, false]);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [layout, setLayout] = useState(getLayout());
+
+  // Listen for window resize to update layout
+  useEffect(() => {
+    const handleResize = () => setLayout(getLayout());
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Helper to get zone positions
   const getZoneRects = () => {
@@ -64,7 +75,6 @@ export default function HeroFlowAnimation() {
   const drawConnectors = () => {
     const svg = svgRef.current;
     if (!svg) return;
-    // Clear all except <defs>
     const defs = svg.querySelector('defs');
     svg.innerHTML = '';
     if (defs) svg.appendChild(defs);
@@ -75,13 +85,24 @@ export default function HeroFlowAnimation() {
       const from = rects[i];
       const to = rects[i + 1];
       if (!from || !to) continue;
-      // Start at right border of source, end at left border of target
-      const startX = from.right - svgRect.left;
-      const startY = from.top + from.height / 2 - svgRect.top;
-      const endX = to.left - svgRect.left;
-      const endY = to.top + to.height / 2 - svgRect.top;
-      const dx = (endX - startX) * 0.5;
-      const d = `M ${startX},${startY} C ${startX + dx},${startY} ${endX - dx},${endY} ${endX},${endY}`;
+      // Responsive: adjust for mobile (vertical connectors)
+      let startX, startY, endX, endY, dx;
+      if (layout === 'mobile') {
+        startX = from.left + from.width / 2 - svgRect.left;
+        startY = from.bottom - svgRect.top;
+        endX = to.left + to.width / 2 - svgRect.left;
+        endY = to.top - svgRect.top;
+        dx = 0;
+      } else {
+        startX = from.right - svgRect.left;
+        startY = from.top + from.height / 2 - svgRect.top;
+        endX = to.left - svgRect.left;
+        endY = to.top + to.height / 2 - svgRect.top;
+        dx = (endX - startX) * 0.5;
+      }
+      const d = layout === 'mobile'
+        ? `M ${startX},${startY} C ${startX},${startY + 40} ${endX},${endY - 40} ${endX},${endY}`
+        : `M ${startX},${startY} C ${startX + dx},${startY} ${endX - dx},${endY} ${endX},${endY}`;
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       path.setAttribute('d', d);
       path.setAttribute('class', 'flow-path arrow-fade-in');
@@ -90,35 +111,26 @@ export default function HeroFlowAnimation() {
     }
   };
 
-  // Animation logic
+  // Animation logic (unchanged, but uses layout for positions)
   useEffect(() => {
     let running = true;
     let blobs = [];
     let usedZones = [];
-
     const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
     const createBlobs = () => {
       blobs = [];
       usedZones = [];
       const uniqueColors = getUniqueColors(3);
       for (let i = 0; i < 3; i++) {
-        const { top, left } = getRandomPosition(i);
+        const { top, left } = getResponsivePositions(i, layout);
         const color = uniqueColors[i];
-        // Assign each blob to a unique zone
         const available = ZONES.filter(z => !usedZones.includes(z.id));
         const targetZone = available[Math.floor(Math.random() * available.length)].id;
         usedZones.push(targetZone);
-        blobs.push({
-          top,
-          left,
-          color,
-          target: targetZone,
-        });
+        blobs.push({ top, left, color, target: targetZone });
       }
       return blobs;
     };
-
     const dropBlobs = async () => {
       let newZonesWithBlob = [false, false, false];
       for (let i = 0; i < blobs.length; i++) {
@@ -127,12 +139,12 @@ export default function HeroFlowAnimation() {
         const zone = zoneRefs.current[zoneIdx];
         if (!blob || !zone) continue;
         await wait(400);
-        const size = blob.offsetWidth;
+        const size = layout === 'mobile' ? 70 : layout === 'tablet' ? 90 : 120;
         const top = zone.offsetTop + (zone.offsetHeight - size) / 2;
         const left = zone.offsetLeft + (zone.offsetWidth - size) / 2;
         zone.classList.add('dropped');
         blob.style.top = `${top}px`;
-        blob.style.left = `${left}px`;
+        blob.style.left = typeof left === 'number' ? `${left}px` : left;
         blob.style.transform = 'scale(1.2)';
         newZonesWithBlob[zoneIdx] = true;
         setZonesWithBlob([...newZonesWithBlob]);
@@ -141,7 +153,6 @@ export default function HeroFlowAnimation() {
         zone.classList.remove('dropped');
       }
     };
-
     const removeBlobs = async () => {
       await wait(1500);
       blobs.forEach((_, i) => {
@@ -151,38 +162,34 @@ export default function HeroFlowAnimation() {
       setZonesWithBlob([false, false, false]);
       await wait(400);
     };
-
     const animate = async () => {
       while (running) {
         blobs = createBlobs();
-        setCycle(c => c + 1); // Force re-render of blobs
-        setShowConnectors(false); // Hide arrows at the start of the cycle
-        setVisibleArrows([false, false]); // Hide all arrows at the start
+        setCycle(c => c + 1);
+        setShowConnectors(false);
+        setVisibleArrows([false, false]);
         await wait(10);
         await dropBlobs();
-        setShowConnectors(true); // Show arrows after blobs have dropped
-        setVisibleArrows([true, false]); // Show first arrow
-        await wait(500); // Delay before showing second arrow
-        setVisibleArrows([true, true]); // Show both arrows
+        setShowConnectors(true);
+        setVisibleArrows([true, false]);
+        await wait(500);
+        setVisibleArrows([true, true]);
         await wait(10);
         drawConnectors();
         await wait(300);
         drawConnectors();
-        // Show confetti just before blobs fade out
         setShowConfetti(true);
-        await wait(1000); // Confetti visible for 1 second
+        await wait(1000);
         setShowConfetti(false);
         await removeBlobs();
-        setShowConnectors(false); // Hide arrows after blobs are removed
-        setVisibleArrows([false, false]); // Hide all arrows
+        setShowConnectors(false);
+        setVisibleArrows([false, false]);
         await wait(800);
       }
     };
-
     setTimeout(() => {
       animate();
     }, 100);
-
     window.addEventListener('resize', drawConnectors);
     return () => {
       running = false;
@@ -190,27 +197,97 @@ export default function HeroFlowAnimation() {
       if (animationFrame.current) cancelAnimationFrame(animationFrame.current);
     };
     // eslint-disable-next-line
-  }, []);
+  }, [layout]);
 
-  // Redraw connectors on mount and when blobs/zones change
+  // Redraw connectors on mount and when blobs/zones/layout change
   useEffect(() => {
     if (showConnectors) {
       setTimeout(drawConnectors, 500);
     }
-  }, [cycle, showConnectors, visibleArrows]);
+  }, [cycle, showConnectors, visibleArrows, layout]);
 
-  // Generate blobs for this cycle
+  // Generate blobs for this cycle (responsive)
   const blobs = React.useMemo(() => {
     let usedZones = [];
     return Array.from({ length: 3 }).map((_, i) => {
-      const { top, left } = getRandomPosition(i);
-      const color = getUniqueColors(3)[i]; // Use the same unique colors for blobs
-      const available = ZONES.filter(z => !usedZones.includes(z.id));
+      const { top, left } = getResponsivePositions(i, layout);
+      const color = getUniqueColors(3)[i];
+      const available = LABEL_SETS[cycle % 2].filter(z => !usedZones.includes(z.id));
       const targetZone = available[Math.floor(Math.random() * available.length)].id;
       usedZones.push(targetZone);
       return { top, left, color, target: targetZone };
     });
-  }, [cycle]);
+  }, [cycle, layout]);
+
+  // Responsive zone and blob sizes
+  const zoneSize = layout === 'mobile' ? { width: 110, height: 70 } : layout === 'tablet' ? { width: 140, height: 100 } : { width: 180, height: 160 };
+  const blobSize = layout === 'mobile' ? 70 : layout === 'tablet' ? 90 : 120;
+
+  // Responsive zone positions
+  const getZoneStyle = (idx) => {
+    if (layout === 'mobile') {
+      return {
+        left: '50%',
+        transform: 'translateX(-50%)',
+        top: `${60 + idx * (zoneSize.height + 30)}px`,
+        width: `${zoneSize.width}px`,
+        height: `${zoneSize.height}px`,
+        border: '2px dashed #444',
+        borderRadius: '16px',
+        position: 'absolute',
+        transition: 'transform 0.3s ease',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'white',
+        fontWeight: 600,
+        fontSize: 14,
+        background: 'rgba(30,30,40,0.2)',
+        zIndex: 2,
+        pointerEvents: 'none',
+      };
+    } else if (layout === 'tablet') {
+      return {
+        left: `${60 + idx * (zoneSize.width + 40)}px`,
+        top: '100px',
+        width: `${zoneSize.width}px`,
+        height: `${zoneSize.height}px`,
+        border: '2px dashed #444',
+        borderRadius: '16px',
+        position: 'absolute',
+        transition: 'transform 0.3s ease',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'white',
+        fontWeight: 600,
+        fontSize: 15,
+        background: 'rgba(30,30,40,0.2)',
+        zIndex: 2,
+        pointerEvents: 'none',
+      };
+    } else {
+      return {
+        left: `${300 + idx * 300}px`,
+        top: '120px',
+        width: `${zoneSize.width}px`,
+        height: `${zoneSize.height}px`,
+        border: '2px dashed #444',
+        borderRadius: '16px',
+        position: 'absolute',
+        transition: 'transform 0.3s ease',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'white',
+        fontWeight: 600,
+        fontSize: 16,
+        background: 'rgba(30,30,40,0.2)',
+        zIndex: 2,
+        pointerEvents: 'none',
+      };
+    }
+  };
 
   // Render
   return (
@@ -233,25 +310,7 @@ export default function HeroFlowAnimation() {
           key={zone.id}
           ref={el => (zoneRefs.current[idx] = el)}
           className={`drop-zone zone${idx + 1}`}
-          style={{
-            left: `${300 + idx * 300}px`,
-            top: '120px',
-            width: '180px',
-            height: '160px',
-            border: '2px dashed #444',
-            borderRadius: '16px',
-            position: 'absolute',
-            transition: 'transform 0.3s ease',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontWeight: 600,
-            fontSize: 16,
-            background: 'rgba(30,30,40,0.2)',
-            zIndex: 2,
-            pointerEvents: 'none',
-          }}
+          style={getZoneStyle(idx)}
         >
           {zonesWithBlob[idx] ? zone.label : ''}
         </div>
@@ -265,8 +324,8 @@ export default function HeroFlowAnimation() {
           style={{
             position: 'absolute',
             borderRadius: '50%',
-            filter: 'blur(40px)', // balanced blur
-            opacity: 0.75, // balanced opacity
+            filter: 'blur(40px)',
+            opacity: 0.75,
             mixBlendMode: 'screen',
             transition: 'top 0.4s ease, left 0.4s ease, transform 0.3s ease, opacity 0.4s',
             zIndex: 10,
@@ -277,10 +336,10 @@ export default function HeroFlowAnimation() {
             fontWeight: 'bold',
             fontSize: 14,
             textShadow: '0 0 3px black',
-            width: '120px',
-            height: '120px',
-            top: `${blob.top}px`,
-            left: `${blob.left}px`,
+            width: `${blobSize}px`,
+            height: `${blobSize}px`,
+            top: typeof blob.top === 'number' ? `${blob.top}px` : blob.top,
+            left: typeof blob.left === 'number' ? `${blob.left}px` : blob.left,
             background: blob.color,
             pointerEvents: 'none',
           }}
@@ -313,14 +372,14 @@ export default function HeroFlowAnimation() {
       {/* Multiple Confetti Bursts */}
       {showConfetti && (
         <>
-          <ConfettiBurst size={85} x="52%" y="28%" />
-          <ConfettiBurst size={142} x="18%" y="42%" />
-          <ConfettiBurst size={67} x="78%" y="38%" />
-          <ConfettiBurst size={123} x="32%" y="72%" />
-          <ConfettiBurst size={98} x="88%" y="22%" />
-          <ConfettiBurst size={156} x="8%" y="58%" />
-          <ConfettiBurst size={73} x="95%" y="68%" />
-          <ConfettiBurst size={134} x="42%" y="48%" />
+          <ConfettiBurst size={layout === 'mobile' ? 55 : layout === 'tablet' ? 80 : 120} x="52%" y="28%" />
+          <ConfettiBurst size={layout === 'mobile' ? 60 : layout === 'tablet' ? 90 : 142} x="18%" y="42%" />
+          <ConfettiBurst size={layout === 'mobile' ? 40 : layout === 'tablet' ? 60 : 67} x="78%" y="38%" />
+          <ConfettiBurst size={layout === 'mobile' ? 70 : layout === 'tablet' ? 100 : 123} x="32%" y="72%" />
+          <ConfettiBurst size={layout === 'mobile' ? 50 : layout === 'tablet' ? 70 : 98} x="88%" y="22%" />
+          <ConfettiBurst size={layout === 'mobile' ? 80 : layout === 'tablet' ? 110 : 156} x="8%" y="58%" />
+          <ConfettiBurst size={layout === 'mobile' ? 45 : layout === 'tablet' ? 70 : 73} x="95%" y="68%" />
+          <ConfettiBurst size={layout === 'mobile' ? 70 : layout === 'tablet' ? 100 : 134} x="42%" y="48%" />
         </>
       )}
       {/* Animation CSS */}
@@ -359,88 +418,58 @@ export default function HeroFlowAnimation() {
           100% { transform: scale(1); }
         }
       `}</style>
-          </div>
-    );
-  }
-  
-  // ConfettiBurst: Organic blob-style particles matching design
-  function ConfettiBurst({ size = 240, x = '50%', y = '50%' }) {
-    // Use the same colors as the blobs for consistency
-    const colors = [
-      '#3B82F6', // Blue
-      '#06B6D4', // Cyan
-      '#10B981', // Green
-      '#F59E42', // Orange
-      '#F43F5E', // Rose
-      '#A21CAF', // Purple
-      '#FBBF24', // Yellow
-      '#6366F1', // Indigo
-      '#EC4899', // Pink
-      '#22D3EE', // Light Cyan
-    ];
-    
-    // Create organic blob-like particles
-    const pieces = Array.from({ length: 8 }).map((_, i) => {
-      const angle = (360 / 8) * i + Math.random() * 30;
-      const distance = (size / 2.5) + Math.random() * (size / 8);
-      const px = Math.cos((angle * Math.PI) / 180) * distance;
-      const py = Math.sin((angle * Math.PI) / 180) * distance;
-      const color = colors[i % colors.length];
-      const particleSize = 60 + Math.random() * 40; // Larger, more blob-like
-      
-      return (
-        <circle
-          key={i}
-          cx={size / 2 + px}
-          cy={size / 2 + py}
-          r={particleSize / 2}
-          fill={color}
-          opacity="0.75"
-          filter="blur(40px)"
-        />
-      );
-    });
-    
+    </div>
+  );
+}
+
+// ConfettiBurst: Organic blob-style particles matching design
+function ConfettiBurst({ size = 240, x = '50%', y = '50%' }) {
+  const colors = [
+    '#3B82F6', '#06B6D4', '#10B981', '#F59E42', '#F43F5E', '#A21CAF', '#FBBF24', '#6366F1', '#EC4899', '#22D3EE',
+  ];
+  const pieces = Array.from({ length: 8 }).map((_, i) => {
+    const angle = (360 / 8) * i + Math.random() * 30;
+    const distance = (size / 2.5) + Math.random() * (size / 8);
+    const px = Math.cos((angle * Math.PI) / 180) * distance;
+    const py = Math.sin((angle * Math.PI) / 180) * distance;
+    const color = colors[i % colors.length];
+    const particleSize = size / 4 + Math.random() * (size / 6);
     return (
-      <svg
-        width={size}
-        height={size}
-        style={{
-          position: 'absolute',
-          left: x,
-          top: y,
-          transform: 'translate(-50%, -50%)',
-          pointerEvents: 'none',
-          zIndex: 20,
-          animation: 'organic-confetti 1s ease-out',
-          mixBlendMode: 'screen',
-        }}
-      >
-        {pieces}
-        <style>{`
-          @keyframes organic-confetti {
-            0% { 
-              opacity: 0; 
-              transform: scale(0.2) translate(-50%, -50%); 
-              filter: blur(60px);
-            }
-            25% { 
-              opacity: 1; 
-              transform: scale(1.0) translate(-50%, -50%); 
-              filter: blur(40px);
-            }
-            75% { 
-              opacity: 1; 
-              transform: scale(1.4) translate(-50%, -50%); 
-              filter: blur(30px);
-            }
-            100% { 
-              opacity: 0; 
-              transform: scale(2.0) translate(-50%, -50%); 
-              filter: blur(20px);
-            }
-          }
-        `}</style>
-      </svg>
+      <circle
+        key={i}
+        cx={size / 2 + px}
+        cy={size / 2 + py}
+        r={particleSize / 2}
+        fill={color}
+        opacity="0.75"
+        filter="blur(40px)"
+      />
     );
-  } 
+  });
+  return (
+    <svg
+      width={size}
+      height={size}
+      style={{
+        position: 'absolute',
+        left: x,
+        top: y,
+        transform: 'translate(-50%, -50%)',
+        pointerEvents: 'none',
+        zIndex: 20,
+        animation: 'organic-confetti 1s ease-out',
+        mixBlendMode: 'screen',
+      }}
+    >
+      {pieces}
+      <style>{`
+        @keyframes organic-confetti {
+          0% { opacity: 0; transform: scale(0.2) translate(-50%, -50%); filter: blur(60px); }
+          25% { opacity: 1; transform: scale(1.0) translate(-50%, -50%); filter: blur(40px); }
+          75% { opacity: 1; transform: scale(1.4) translate(-50%, -50%); filter: blur(30px); }
+          100% { opacity: 0; transform: scale(2.0) translate(-50%, -50%); filter: blur(20px); }
+        }
+      `}</style>
+    </svg>
+  );
+} 

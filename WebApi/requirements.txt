@@ -52,3 +52,4 @@ uvicorn==0.34.3
 xxhash==3.5.0
 zstandard==0.23.0
 langchain-community==0.3.24
+cryptography==45.0.5

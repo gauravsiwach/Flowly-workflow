@@ -16,6 +16,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Modal from './components/Modal/Modal';
 import { FolderOpen, Trash2, Search } from 'lucide-react';
+import { API_BASE_URL } from './config_definitions/api_config';
 
 // Landing Page Component
 function LandingPageComponent() {
@@ -461,7 +462,7 @@ function AppPageComponent() {
     // Send to backend
     try {
       const token = localStorage.getItem('flowly_jwt_token');
-      const response = await fetch('http://localhost:8000/user/save-workflow', {
+      const response = await fetch(`${API_BASE_URL}/user/save-workflow`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -524,7 +525,7 @@ function AppPageComponent() {
     setLoadError(null);
     try {
       const token = localStorage.getItem('flowly_jwt_token');
-      const response = await fetch('http://localhost:8000/user/list-workflows', {
+      const response = await fetch(`${API_BASE_URL}/user/list-workflows`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -574,7 +575,7 @@ function AppPageComponent() {
     if (!window.confirm('Are you sure you want to delete this workflow? This action cannot be undone.')) return;
     try {
       const token = localStorage.getItem('flowly_jwt_token');
-      const response = await fetch(`http://localhost:8000/user/delete-workflow/${workflowId}`, {
+      const response = await fetch(`${API_BASE_URL}/user/delete-workflow/${workflowId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

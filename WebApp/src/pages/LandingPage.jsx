@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { Zap, Globe, Mail, Brain, ArrowRight, Play, BookOpen, Users, Star, CheckCircle, Github, ExternalLink } from 'lucide-react';
+import { Zap, Globe, Mail, Brain, ArrowRight, Play, BookOpen, Users, Star, CheckCircle, Github, ExternalLink, Menu, X } from 'lucide-react';
 import HeroFlowAnimation from '../components/HeroFlowAnimation';
 
 const LandingPage = ({ onGetStarted }) => {
   const { theme } = useTheme();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const features = [
     {
@@ -49,26 +50,186 @@ const LandingPage = ({ onGetStarted }) => {
     }
   ];
 
+  const handleMobileMenuToggle = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  const handleNavClick = (sectionId) => {
+    document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+    setMobileMenuOpen(false);
+  };
+
   return (
     <div style={{ 
       backgroundColor: theme.colors.background,
       color: theme.colors.text.primary,
-      minHeight: '100vh'
+      minHeight: '100vh',
+      position: 'relative',
+      overflowX: 'hidden',
     }}>
+      {/* Responsive styles for header/hero */}
+      <style>{`
+        @media (max-width: 700px) {
+          .lp-header {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 12px !important;
+            padding: 12px !important;
+          }
+          .lp-header-nav {
+            flex-direction: column !important;
+            gap: 12px !important;
+            width: 100% !important;
+            align-items: flex-start !important;
+            display: none !important;
+          }
+          .lp-header-nav.mobile-open {
+            display: flex !important;
+          }
+          .lp-header-btn {
+            width: 100% !important;
+            margin-top: 8px !important;
+            font-size: 1rem !important;
+            padding: 10px 0 !important;
+          }
+          .lp-hero-heading {
+            font-size: 2rem !important;
+            padding: 0 2vw !important;
+          }
+          .lp-hero-desc {
+            font-size: 1rem !important;
+            padding: 0 2vw !important;
+          }
+          .lp-hero-section {
+            min-height: 650px !important;
+          }
+          .mobile-menu-btn {
+            display: block !important;
+          }
+          .desktop-nav {
+            display: none !important;
+          }
+        }
+        @media (min-width: 701px) {
+          .mobile-menu-btn {
+            display: none !important;
+          }
+          .desktop-nav {
+            display: flex !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .lp-header-btn, .lp-hero-btn {
+            width: 100% !important;
+            text-align: center !important;
+            justify-content: center !important;
+            display: flex !important;
+            align-items: center !important;
+          }
+          .lp-hero-heading {
+            font-size: 1.3rem !important;
+          }
+          .lp-hero-desc {
+            font-size: 0.95rem !important;
+          }
+          .lp-hero-section {
+            min-height: 700px !important;
+          }
+        }
+        .mobile-menu-btn {
+          background: transparent;
+          border: none;
+          color: ${theme.colors.text.primary};
+          cursor: pointer;
+          padding: 8px;
+          border-radius: 6px;
+          transition: all 0.2s ease;
+        }
+        .mobile-menu-btn:hover {
+          background: ${theme.colors.border};
+        }
+        .mobile-nav-item {
+          padding: 12px 16px;
+          border-radius: 6px;
+          transition: all 0.2s ease;
+          cursor: pointer;
+          font-weight: 500;
+        }
+        .mobile-nav-item:hover {
+          background: ${theme.colors.border};
+        }
+      `}</style>
       {/* Header */}
-      <header style={{ 
+      <header className="lp-header" style={{ 
         padding: '20px',
         borderBottom: `1px solid ${theme.colors.border}`,
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 0,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Zap size={32} color={theme.colors.primary} />
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Flowly</h1>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>Flowly</h1>
+          <a
+            href="https://github.com/gauravsiwach/Flowly-workflow"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              marginLeft: 12,
+              display: 'flex',
+              alignItems: 'center',
+              background: theme.colors.surface,
+              border: `1px solid ${theme.colors.border}`,
+              borderRadius: 6,
+              padding: '4px 10px',
+              color: theme.colors.text.secondary,
+              textDecoration: 'none',
+              fontWeight: 500,
+              fontSize: 14,
+              transition: 'all 0.2s',
+              gap: 6,
+            }}
+            onMouseEnter={e => {
+              e.target.style.background = theme.colors.primary;
+              e.target.style.color = '#fff';
+              e.target.style.borderColor = theme.colors.primary;
+            }}
+            onMouseLeave={e => {
+              e.target.style.background = theme.colors.surface;
+              e.target.style.color = theme.colors.text.secondary;
+              e.target.style.borderColor = theme.colors.border;
+            }}
+            title="View on GitHub"
+          >
+            <Github size={18} style={{ marginRight: 4 }} />
+            <span style={{ display: 'none', '@media (min-width: 600px)': { display: 'inline' } }}>GitHub</span>
+          </a>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <nav style={{ display: 'flex', gap: '30px' }}>
+        
+        {/* Mobile Menu Button */}
+        <button
+          className="mobile-menu-btn"
+          onClick={handleMobileMenuToggle}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: theme.colors.text.primary,
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '6px',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => e.target.style.background = theme.colors.border}
+          onMouseLeave={(e) => e.target.style.background = 'transparent'}
+        >
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+          {/* Desktop Navigation */}
+          <nav className="lp-header-nav desktop-nav" style={{ display: 'flex', gap: '30px' }}>
             <a href="#features" 
                onClick={(e) => {
                  e.preventDefault();
@@ -103,6 +264,40 @@ const LandingPage = ({ onGetStarted }) => {
             >
               Templates
             </a>
+            <a href="#hireme" 
+               onClick={(e) => {
+                 e.preventDefault();
+                 document.getElementById('hireme').scrollIntoView({ behavior: 'smooth' });
+               }}
+               style={{ 
+                 color: theme.colors.text.secondary, 
+                 textDecoration: 'none',
+                 fontWeight: '500',
+                 transition: 'color 0.2s ease',
+                 cursor: 'pointer'
+               }}
+               onMouseEnter={(e) => e.target.style.color = theme.colors.primary}
+               onMouseLeave={(e) => e.target.style.color = theme.colors.text.secondary}
+            >
+              Hire Me
+            </a>
+            <a href="#pricing" 
+               onClick={(e) => {
+                 e.preventDefault();
+                 document.getElementById('pricing').scrollIntoView({ behavior: 'smooth' });
+               }}
+               style={{ 
+                 color: theme.colors.text.secondary, 
+                 textDecoration: 'none',
+                 fontWeight: '500',
+                 transition: 'color 0.2s ease',
+                 cursor: 'pointer'
+               }}
+               onMouseEnter={(e) => e.target.style.color = theme.colors.primary}
+               onMouseLeave={(e) => e.target.style.color = theme.colors.text.secondary}
+            >
+              Pricing
+            </a>
             <a href="#opensource" 
                onClick={(e) => {
                  e.preventDefault();
@@ -121,7 +316,103 @@ const LandingPage = ({ onGetStarted }) => {
               Open Source
             </a>
           </nav>
+
+          {/* Mobile Navigation */}
+          <nav className={`lp-header-nav ${mobileMenuOpen ? 'mobile-open' : ''}`} style={{ 
+            display: mobileMenuOpen ? 'flex' : 'none',
+            flexDirection: 'column',
+            gap: '8px',
+            width: '100%',
+            marginTop: '12px',
+            padding: '12px',
+            backgroundColor: theme.colors.surface,
+            borderRadius: '8px',
+            border: `1px solid ${theme.colors.border}`,
+          }}>
+            <div 
+              className="mobile-nav-item"
+              onClick={() => handleNavClick('features')}
+              style={{ 
+                color: theme.colors.text.secondary,
+                fontWeight: '500',
+                transition: 'all 0.2s ease',
+                cursor: 'pointer',
+                padding: '12px 16px',
+                borderRadius: '6px',
+              }}
+              onMouseEnter={(e) => e.target.style.background = theme.colors.border}
+              onMouseLeave={(e) => e.target.style.background = 'transparent'}
+            >
+              Features
+            </div>
+            <div 
+              className="mobile-nav-item"
+              onClick={() => handleNavClick('templates')}
+              style={{ 
+                color: theme.colors.text.secondary,
+                fontWeight: '500',
+                transition: 'all 0.2s ease',
+                cursor: 'pointer',
+                padding: '12px 16px',
+                borderRadius: '6px',
+              }}
+              onMouseEnter={(e) => e.target.style.background = theme.colors.border}
+              onMouseLeave={(e) => e.target.style.background = 'transparent'}
+            >
+              Templates
+            </div>
+            <div 
+              className="mobile-nav-item"
+              onClick={() => handleNavClick('hireme')}
+              style={{ 
+                color: theme.colors.text.secondary,
+                fontWeight: '500',
+                transition: 'all 0.2s ease',
+                cursor: 'pointer',
+                padding: '12px 16px',
+                borderRadius: '6px',
+              }}
+              onMouseEnter={(e) => e.target.style.background = theme.colors.border}
+              onMouseLeave={(e) => e.target.style.background = 'transparent'}
+            >
+              Hire Me
+            </div>
+            <div 
+              className="mobile-nav-item"
+              onClick={() => handleNavClick('pricing')}
+              style={{ 
+                color: theme.colors.text.secondary,
+                fontWeight: '500',
+                transition: 'all 0.2s ease',
+                cursor: 'pointer',
+                padding: '12px 16px',
+                borderRadius: '6px',
+              }}
+              onMouseEnter={(e) => e.target.style.background = theme.colors.border}
+              onMouseLeave={(e) => e.target.style.background = 'transparent'}
+            >
+              Pricing
+            </div>
+            <div 
+              className="mobile-nav-item"
+              onClick={() => handleNavClick('opensource')}
+              style={{ 
+                color: theme.colors.text.secondary,
+                fontWeight: '500',
+                transition: 'all 0.2s ease',
+                cursor: 'pointer',
+                padding: '12px 16px',
+                borderRadius: '6px',
+              }}
+              onMouseEnter={(e) => e.target.style.background = theme.colors.border}
+              onMouseLeave={(e) => e.target.style.background = 'transparent'}
+            >
+              Open Source
+            </div>
+          </nav>
+
           <button
+            className="lp-header-btn"
             onClick={onGetStarted}
             style={{
               backgroundColor: theme.colors.primary,
@@ -131,7 +422,8 @@ const LandingPage = ({ onGetStarted }) => {
               borderRadius: '6px',
               cursor: 'pointer',
               fontWeight: '600',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
+              minWidth: 120,
             }}
             onMouseEnter={(e) => {
               e.target.style.backgroundColor = theme.colors.button.hover;
@@ -148,14 +440,14 @@ const LandingPage = ({ onGetStarted }) => {
       </header>
 
       {/* Hero Section */}
-      <section style={{ 
+      <section className="lp-hero-section" style={{ 
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between', // space-between to push content to top and bottom
+        justifyContent: 'space-between',
         alignItems: 'center',
         position: 'relative',
         width: '100%',
-        minHeight: '520px', // slightly taller for more space
+        minHeight: '520px',
         maxWidth: '100vw',
         overflow: 'hidden',
         padding: 0,
@@ -167,14 +459,15 @@ const LandingPage = ({ onGetStarted }) => {
           zIndex: 1, 
           width: '100%',
           maxWidth: '800px',
-          padding: '0px 20px 0 20px', // 0px from top (50px higher)
+          padding: '0px 20px 0 20px',
           textAlign: 'center',
         }}>
-          <h1 style={{ 
+          <h1 className="lp-hero-heading" style={{ 
             fontSize: '3rem',
             fontWeight: 'bold',
             marginBottom: '20px',
-            color: theme.colors.text.primary
+            color: theme.colors.text.primary,
+            marginTop: 0,
           }}>
             Flowly – No Code. No Limits.
           </h1>
@@ -189,19 +482,21 @@ const LandingPage = ({ onGetStarted }) => {
           zIndex: 1, 
           width: '100%',
           maxWidth: '800px',
-          padding: '0 20px 60px 20px', // 60px from bottom
+          padding: '0 20px 60px 20px',
           textAlign: 'center',
         }}>
-          <p style={{ 
+          <p className="lp-hero-desc" style={{ 
             fontSize: '1.2rem',
             color: theme.colors.text.secondary,
             marginBottom: '5px',
-            lineHeight: '1.6'
+            lineHeight: '1.6',
+            marginTop: 0,
           }}>
            Turn your needs, ideas, and problems into intelligent, AI-powered solutions with Flowly.
-Think it. Plan it. Drag it. With Flowly’s no-code and AI-driven builder, anyone can create powerful workflows—this is the future where everyone can code without coding.
+Think it. Plan it. Drag it. With Flowly's no-code and AI-driven builder, anyone can create powerful workflows—this is the future where everyone can code without coding.
           </p>
           <button
+            className="lp-hero-btn"
             onClick={onGetStarted}
             style={{
               backgroundColor: theme.colors.primary,
@@ -216,7 +511,17 @@ Think it. Plan it. Drag it. With Flowly’s no-code and AI-driven builder, anyon
               alignItems: 'center',
               gap: '10px',
               margin: '0 auto',
-              marginBottom: '24px'
+              marginBottom: '24px',
+              minWidth: 180,
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = theme.colors.button.hover;
+              e.target.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = theme.colors.primary;
+              e.target.style.transform = 'translateY(0)';
             }}
           >
             <Play size={20} />
@@ -425,7 +730,7 @@ Think it. Plan it. Drag it. With Flowly’s no-code and AI-driven builder, anyon
           </p>
           <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <a
-              href="#"
+              href="https://github.com/gauravsiwach/Flowly-workflow"
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -450,7 +755,7 @@ Think it. Plan it. Drag it. With Flowly’s no-code and AI-driven builder, anyon
               View on GitHub
             </a>
             <a
-              href="#"
+              href="https://github.com/gauravsiwach/Flowly-workflow"
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -510,6 +815,75 @@ Think it. Plan it. Drag it. With Flowly’s no-code and AI-driven builder, anyon
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Hire Me Section */}
+      <section id="hireme" style={{ 
+        padding: '60px 20px',
+        backgroundColor: theme.colors.background,
+        textAlign: 'center',
+        borderTop: `1px solid ${theme.colors.border}`,
+      }}>
+        <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+          <h2 style={{ 
+            fontSize: '2rem',
+            marginBottom: '20px',
+            color: theme.colors.text.primary
+          }}>
+            Hire Me
+          </h2>
+          <p style={{ 
+            fontSize: '1.1rem',
+            color: theme.colors.text.secondary,
+            marginBottom: '30px',
+            lineHeight: '1.6'
+          }}>
+            Need a custom workflow, automation, or AI solution? <br/>
+            I am available for freelance projects, consulting, and collaborations.<br/>
+            <br/>
+            <strong>Contact me directly:</strong><br/>
+            <a href="mailto:gauravsiwach2008@gmail.com" style={{ color: theme.colors.primary, textDecoration: 'underline' }}>gauravsiwach2008@gmail.com</a>
+            <br/><br/>
+            <span style={{ color: theme.colors.text.muted, fontSize: '0.95em' }}>
+              Fast response, flexible engagement, and a focus on results.
+            </span>
+          </p>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" style={{ 
+        padding: '60px 20px',
+        backgroundColor: theme.colors.surface,
+        textAlign: 'center',
+        borderTop: `1px solid ${theme.colors.border}`,
+      }}>
+        <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+          <h2 style={{ 
+            fontSize: '2rem',
+            marginBottom: '20px',
+            color: theme.colors.text.primary
+          }}>
+            Pricing
+          </h2>
+          <p style={{ 
+            fontSize: '1.1rem',
+            color: theme.colors.text.secondary,
+            marginBottom: '30px',
+            lineHeight: '1.6'
+          }}>
+            Pricing is transparent and tailored to your needs.<br/>
+            <br/>
+            <strong>Typical services include:</strong><br/>
+            - Workflow setup and automation<br/>
+            - Custom node or integration development<br/>
+            - AI/LLM prompt engineering<br/>
+            <br/>
+            <span style={{ color: theme.colors.text.muted, fontSize: '0.95em' }}>
+              Contact for a free estimate. No hidden fees.
+            </span>
+          </p>
         </div>
       </section>
     </div>
