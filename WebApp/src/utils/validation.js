@@ -167,8 +167,8 @@ export const validateAllNodes = (nodes) => {
     const nodeType = nodeData.node_id;
     const inputValue = nodeData.additional_input?.[nodeData.title] || '';
 
-    // Only validate nodes that have input fields
-    if (nodeData.inputType) {
+    // Only validate nodes that have input fields and are not file inputs
+    if (nodeData.inputType && nodeData.inputType !== 'file') {
       const validation = validateNodeInput(nodeType, inputValue);
       
       if (!validation.isValid) {

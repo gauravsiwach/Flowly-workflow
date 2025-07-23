@@ -4,7 +4,7 @@ from openai import OpenAI
 import os
 # from dotenv import load_dotenv
 import asyncio
-from redis_client import get_user_openai_key
+from redis_client import get_user_openai_key_sync
 
 # load_dotenv()
 
@@ -38,7 +38,7 @@ def classify_query(state: dict) -> dict:
     user_id = state.get("user_id")
     openai_key = None
     if user_id:
-        openai_key = sget_user_openai_key(user_id)
+        openai_key = get_user_openai_key_sync(user_id)
     if not openai_key:
         state["node_result"] = "Error: OpenAI key not found for user."
         return state

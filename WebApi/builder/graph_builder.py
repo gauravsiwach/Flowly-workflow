@@ -9,7 +9,14 @@ class State(TypedDict):
     node_name: str
     additional_input: list
 
-def build_graph_from_user_input(user_input_steps: list[dict]) -> StateGraph:
+def with_user_id(node_fn, user_id):
+    def wrapper(state):
+        if "user_id" not in state and user_id is not None:
+            state["user_id"] = user_id
+        return node_fn(state)
+    return wrapper
+
+def build_graph_from_user_input(user_input_steps: list[dict], user_id=None) -> StateGraph:
     graph_builder = StateGraph(State)
     ordered_nodes = [
         function_map[step["node_id"]]
@@ -17,7 +24,7 @@ def build_graph_from_user_input(user_input_steps: list[dict]) -> StateGraph:
     ]
     for node_name in ordered_nodes:
         if node_name in node_functions:
-            graph_builder.add_node(node_name, node_functions[node_name])
+            graph_builder.add_node(node_name, with_user_id(node_functions[node_name], user_id))
         else:
             raise ValueError(f"Unknown node_id: {node_name}")
     graph_builder.add_edge(START, ordered_nodes[0])

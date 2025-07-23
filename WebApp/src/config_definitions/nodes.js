@@ -99,9 +99,7 @@ export const getNodes = (theme) => [
     description: 'Fetches an HTML template from a URL and fills it with content using AI',
     type: 'custom',
     icon: FileText,
-    fields: [
-      { name: 'templateURL', label: 'Template URL', type: 'text', required: true }
-    ]
+    inputType: 'file',
   },
 ];
 

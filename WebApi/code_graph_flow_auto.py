@@ -42,17 +42,24 @@ def execute_graph_flow(workflow_input, additional_input=None, user_id=None):
         if "node_input" in step:
             state["node_input"] = step["node_input"]
             break
-    graph_builder = build_graph_from_user_input(workflow_input)
+    graph_builder = build_graph_from_user_input(workflow_input, user_id=user_id)
     graph = graph_builder.compile()
     result_stream = graph.stream(state)
     results = []
     for node_input_config, node_output_state in zip(workflow_input, result_stream):
-        # Flatten if node_output_state is wrapped in a key
-        if isinstance(node_output_state, dict) and len(node_output_state) == 1:
-            inner = list(node_output_state.values())[0]
+        # Patch: Ensure user_id is always present in node_output_state
+        if "user_id" in state and (isinstance(node_output_state, dict) and "user_id" not in node_output_state):
+            node_output_state["user_id"] = state["user_id"]
+        # Robust flattening: find function name key and flatten even if extra keys exist
+        function_keys = [k for k in node_output_state.keys() if k in function_map.values() or k in function_map.keys()]
+        if function_keys:
+            key = function_keys[0]
+            inner = node_output_state[key]
             if isinstance(inner, dict):
                 inner["node_id"] = node_input_config["node_id"]
                 inner["node_name"] = node_input_config.get("node_name", "")
+                if "user_id" in state and "user_id" not in inner:
+                    inner["user_id"] = state["user_id"]
                 results.append(inner)
                 continue
         node_output_state["node_id"] = node_input_config["node_id"]
@@ -77,18 +84,24 @@ def execute_graph_flow_stream(workflow_input, additional_input=None, user_id=Non
             state["node_id"] = node_input_config["node_id"]
             state["node_name"] = function_map.get(node_input_config["node_id"], "")
             break
-    graph_builder = build_graph_from_user_input(workflow_input)
+    graph_builder = build_graph_from_user_input(workflow_input, user_id=user_id)
     graph = graph_builder.compile()
     result_stream = graph.stream(state)
     for node_input_config, node_output_state in zip(workflow_input, result_stream):
-        # Flatten if node_output_state is wrapped in a key
-        if isinstance(node_output_state, dict) and len(node_output_state) == 1:
-            inner = list(node_output_state.values())[0]
+        # Robust flattening: find function name key and flatten even if extra keys exist
+        function_keys = [k for k in node_output_state.keys() if k in function_map.values() or k in function_map.keys()]
+        if function_keys:
+            key = function_keys[0]
+            inner = node_output_state[key]
             if isinstance(inner, dict):
                 inner["node_id"] = node_input_config["node_id"]
                 inner["node_name"] = node_input_config.get("node_name", "")
+                if "user_id" in state and "user_id" not in inner:
+                    inner["user_id"] = state["user_id"]
                 yield json.dumps({"results": inner, "additional_input": additional_input or []}) + "\n"
                 continue
+        if "user_id" in state and "user_id" not in node_output_state:
+            node_output_state["user_id"] = state["user_id"]
         node_output_state["node_id"] = node_input_config["node_id"]
         node_output_state["node_name"] = node_input_config.get("node_name", "")
         yield json.dumps({"results": node_output_state, "additional_input": additional_input or []}) + "\n"

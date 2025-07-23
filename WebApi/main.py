@@ -11,6 +11,7 @@ from user_profile import get_user_profile, UserProfileRequest
 from jwt_utils import get_current_user
 from redis_client import save_openai_key, save_user_workflow, get_user_workflows, delete_user_workflow, save_user_theme, get_user_theme
 from fastapi import Path
+from fastapi import UploadFile
 
 load_dotenv()
 
@@ -51,25 +52,29 @@ async def get_user_profile_endpoint(request: UserProfileRequest):
     return await get_user_profile(request)
 
 @app.post("/run-graph")
-async def run_graph(payload: GraphFlowRequest):
+async def run_graph(request: Request, current_user: dict = Depends(get_current_user)):
     try:
-        user_input = payload.graph_flowData
-        additional_input = payload.additional_input
+        content_type = request.headers.get("content-type", "")
+        payload = await request.json()
+        user_input = payload["graph_flowData"]
+        additional_input = payload["additional_input"]
+        user_id = current_user.get("id") if current_user else None                  
         if not user_input:
             raise ValueError("Missing 'graph_flowData' in request body")
-        result = execute_graph_flow([item.model_dump() for item in user_input], [item.model_dump() for item in additional_input])
+        result = execute_graph_flow([item for item in user_input], [item for item in additional_input], user_id=user_id)
         return {"status": "completed", "result": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/run-graph-stream")
-async def run_graph_stream(payload: GraphFlowRequest):
+async def run_graph_stream(payload: GraphFlowRequest, current_user: dict = Depends(get_current_user)):
     try:
         user_input = payload.graph_flowData
         additional_input = payload.additional_input
+        user_id = current_user.get("id") if current_user else None
         if not user_input:
             raise ValueError("Missing 'graph_flowData' in request body")
-        return StreamingResponse(execute_graph_flow_stream([item.model_dump() for item in user_input], [item.model_dump() for item in additional_input]), media_type="application/json")
+        return StreamingResponse(execute_graph_flow_stream([item.model_dump() for item in user_input], [item.model_dump() for item in additional_input], user_id=user_id), media_type="application/json")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
