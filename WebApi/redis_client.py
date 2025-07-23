@@ -1,4 +1,5 @@
-import redis.asyncio as redis
+import redis  # sync client
+import redis.asyncio as aioredis  # async client
 import os
 import json
 import time
@@ -26,7 +27,7 @@ def decrypt_api_key(token: str) -> str:
 REDIS_HOST = os.getenv("REDIS_HOST") or "localhost"
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
-REDIS_DB = os.getenv("REDIS_DB") or "flowly"  # Always a string fallback
+REDIS_DB = int(os.getenv("REDIS_DB", "0"))  # Always an int fallback
 
 # Debug logging
 print(f"🔧 Redis Configuration:")
@@ -36,16 +37,16 @@ print(f"   Password: {'***' if REDIS_PASSWORD else 'None'}")
 print(f"   DB: {REDIS_DB}")
 
 # Global Redis client
-redis_client: Optional[redis.Redis] = None
+redis_client: Optional[aioredis.Redis] = None
 
-async def get_redis_client() -> redis.Redis:
+async def get_redis_client() -> aioredis.Redis:
     """
     Get or create Redis client
     """
     global redis_client
     if redis_client is None:
         try:
-            redis_client = redis.Redis(
+            redis_client = aioredis.Redis(
                 host=REDIS_HOST,
                 port=REDIS_PORT,
                 password=REDIS_PASSWORD,
@@ -241,6 +242,36 @@ async def get_user_openai_key(user_id: str) -> Optional[str]:
     if obj and obj.get("api_key"):
         return obj["api_key"]
     return None
+
+def get_user_openai_key_sync(user_id: str) -> Optional[str]:
+    """
+    Synchronous version: Fetch and decrypt the OpenAI API key for a given user_id from Redis.
+    Returns the decrypted key as a string, or None if not found.
+    """
+    try:
+        client = redis.Redis(
+            host=REDIS_HOST,
+            port=REDIS_PORT,
+            password=REDIS_PASSWORD,
+            db=REDIS_DB,
+            decode_responses=True,
+            encoding="utf-8"
+        )
+        key = f"api_key:{user_id}:openai"
+        data = client.get(key)  # This should be a string, not a coroutine
+        if data:
+            obj = json.loads(data)
+            if obj.get("api_key"):
+                try:
+                    obj["api_key"] = decrypt_api_key(obj["api_key"])
+                except Exception as e:
+                    print(f"❌ Error decrypting API key: {e}")
+                    obj["api_key"] = None
+            return obj["api_key"]
+        return None
+    except Exception as e:
+        print(f"❌ Error retrieving OpenAI key (sync) from Redis: {e}")
+        return None
 
 async def save_user_workflow(user_id: str, name: str, data: dict) -> str:
     """

@@ -4,21 +4,37 @@ from datetime import datetime
 from openai import OpenAI
 # from dotenv import load_dotenv
 import asyncio
-from redis_client import get_user_openai_key
+from redis_client import get_user_openai_key_sync
+import base64
+import re
 
 # load_dotenv()
 
 def template_generator(state: dict) -> dict:
     """Node: Template_Generator. Fetches an HTML template from a URL (from additional_input) and fills it with input content using LLM."""
     try:
-        # Read the static template
-        try:
-            template_path = os.path.join(os.path.dirname(__file__), '../templates/blog_template.html')
-            with open(template_path, 'r', encoding='utf-8') as f:
-                template_html = f.read()
-        except Exception as e:
-            state['node_result'] = f"<p>Error reading static template: {e}</p>"
-            return state
+        # Try to use uploaded file as template if present
+        template_html = None
+        node_input = state.get('node_input', '')
+        if isinstance(node_input, str) and node_input.startswith('data:'):
+            match = re.match(r'data:(.*?);base64,(.*)', node_input)
+            if match:
+                mime_type, b64_data = match.groups()
+                try:
+                    file_bytes = base64.b64decode(b64_data)
+                    template_html = file_bytes.decode('utf-8', errors='replace')
+                except Exception as e:
+                    state['node_result'] = f"<p>Error decoding uploaded template: {e}</p>"
+                    return state
+        # Fallback to static template if no uploaded file
+        if not template_html:
+            try:
+                template_path = os.path.join(os.path.dirname(__file__), '../templates/blog_template.html')
+                with open(template_path, 'r', encoding='utf-8') as f:
+                    template_html = f.read()
+            except Exception as e:
+                state['node_result'] = f"<p>Error reading static template: {e}</p>"
+                return state
         # Fill placeholders from node_input/state
         try:
             node_input_obj = json.loads(state.get('node_input', '{}'))
@@ -58,7 +74,7 @@ Return the complete HTML page.
         user_id = state.get("user_id")
         openai_key = None
         if user_id:
-            openai_key = sget_user_openai_key(user_id)
+            openai_key = get_user_openai_key_sync(user_id)
         if not openai_key:
             state["node_result"] = "Error: OpenAI key not found for user."
             return state

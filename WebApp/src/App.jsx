@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import Header from './components/Header/Header';
@@ -117,6 +117,8 @@ function AppPageComponent() {
           node_input: node.data.additional_input?.[node.data.title] || undefined,
           node_name: node.data.title,
           node_result: "",
+          inputType: node.data.inputType, // Ensure inputType is present
+          additional_input: node.data.additional_input, // Ensure file is present
         }));
       }
 
@@ -240,7 +242,9 @@ function AppPageComponent() {
           seq: idx + 1,
           node_input: node.data.additional_input?.[node.data.title] || "",
           node_name: node.data.title,
-          node_result: ""
+          node_result: "",
+          inputType: node.data.inputType, // Ensure inputType is present
+          additional_input: node.data.additional_input, // Ensure file is present
         }));
       }
       const additionalInput = nodes.map(node => ({

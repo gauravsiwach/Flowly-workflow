@@ -17,7 +17,8 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult, is
     const inputValue = e.target.value;
     data.onChange?.(id, inputValue);
     setValidationError(null);
-    if (data.inputType && data.node_id) {
+    // Only validate for text input
+    if (data.inputType === 'text' && data.node_id) {
       setIsValidating(true);
       const validation = validateNodeInput(data.node_id, inputValue);
       setTimeout(() => {
@@ -29,7 +30,8 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult, is
 
   useEffect(() => {
     const currentInput = data.additional_input?.[data.title] || '';
-    if (data.inputType && data.node_id && currentInput) {
+    // Only validate for text input
+    if (data.inputType === 'text' && data.node_id && currentInput) {
       const validation = validateNodeInput(data.node_id, currentInput);
       setValidationError(validation.error);
     } else if (data.validationError) {
@@ -357,6 +359,26 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult, is
                 />
               ))}
             </>
+          ) : data.inputType === 'file' ? (
+            <input
+              type="file"
+              className="custom-node-input"
+              style={inputStyle}
+              onChange={e => {
+                const file = e.target.files[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onload = function(evt) {
+                    const base64String = evt.target.result;
+                    data.onChange?.(id, base64String); // Store base64 string
+                  };
+                  reader.readAsDataURL(file);
+                } else {
+                  data.onChange?.(id, '');
+                }
+              }}
+              onClick={e => e.stopPropagation()}
+            />
           ) : (
             data.inputType && (
               <input
