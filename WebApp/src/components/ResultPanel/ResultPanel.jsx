@@ -140,8 +140,10 @@ export default function ResultPanel({
   const nodeData = selectedNode.data;
   const result = nodeData.node_result;
 
-  // Check if this is HTML content (from Convert to HTML Template or Template Generator node)
-  const isHtmlContent = (nodeData.title === 'Convert_to_HTML_Template' || nodeData.title === 'Template_Generator') && 
+  // Check if this is HTML content (from Convert to HTML Template, Template Generator, or HTML Editor node)
+  const isHtmlContent = (nodeData.title === 'Convert_to_HTML_Template' || 
+                        nodeData.title === 'Template_Generator' || 
+                        nodeData.title === 'HTML_Editor') && 
                        typeof result === 'string' && 
                        result.includes('<html') && 
                        result.includes('</html>');

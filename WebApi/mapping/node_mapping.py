@@ -8,6 +8,7 @@ from nodes.fetch_it_tech_news import fetch_it_tech_news
 from nodes.get_topic_content import get_topic_content
 from nodes.blog_researcher import blog_researcher
 from nodes.template_generator import template_generator
+from nodes.html_editor import html_editor
 # from nodes.classify_query import classify_query  # Uncomment if needed
 
 function_map = {
@@ -20,7 +21,8 @@ function_map = {
     "a1b2c3d4-e5f6-7890-abcd-ef1234567890": "fetch_top_news",
     "b2c3d4e5-f6g7-8901-bcde-f23456789012": "fetch_it_tech_news",
     "e3b0c442-98fc-1c14-9afb-4c8996fb9242": "get_topic_content",
-    "d4e5f6a7-1234-4bcd-8ef0-abcdef123456": "blog_researcher"
+    "d4e5f6a7-1234-4bcd-8ef0-abcdef123456": "blog_researcher",
+    "a8b9c0d1-2345-4def-8901-abcdef234567": "html_editor"
     # Add classify_query if needed
 }
 
@@ -35,5 +37,6 @@ node_functions = {
     "fetch_it_tech_news": fetch_it_tech_news,
     "get_topic_content": get_topic_content,
     "blog_researcher": blog_researcher,
+    "html_editor": html_editor,
     # "classify_query": classify_query,  # Add if used in your workflow
-} 
+}

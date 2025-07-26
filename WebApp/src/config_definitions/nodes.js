@@ -1,4 +1,4 @@
-import { Globe, Cloud, FileText, Mail, Send, Newspaper, Code, Clipboard } from 'lucide-react';
+import { Globe, Cloud, FileText, Mail, Send, Newspaper, Code, Clipboard, Edit3, ArrowRight } from 'lucide-react';
 
 // Node definitions
 export const getNodes = (theme) => [
@@ -101,6 +101,25 @@ export const getNodes = (theme) => [
     icon: FileText,
     inputType: 'file',
   },
+  {
+    id: 'c1d2e3f4-5678-9123-abcd-efabcdefabcd', // pass_through
+    title: 'Pass_Through',
+    label: '',
+    color: theme.colors.background,
+    type: 'custom',
+    description: 'Passes data unchanged to the next node',
+    icon: ArrowRight,
+  },
+  {
+    id: 'a8b9c0d1-2345-4def-8901-abcdef234567', // html_editor
+    title: 'HTML_Editor',
+    label: '',
+    color: theme.colors.background,
+    type: 'custom',
+    description: 'Edit HTML content in a popup editor',
+    inputType: 'html',
+    icon: Edit3,
+  },
 ];
 
 // Node categories
@@ -114,10 +133,12 @@ export const nodeCategories = {
   "AI & Processing": [
     "Summarize_HTML",
     "Blog_Researcher",
-    "Template_Generator"
+    "Template_Generator",
+    "Pass_Through"
   ],
   "Communication & Output": [
     "Convert_to_HTML_Template",
+    "HTML_Editor",
     "Send_Email"
   ],
   "External Services": [

@@ -1,13 +1,21 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import Editor from '@monaco-editor/react';
+import Modal from '../Modal/Modal';
 import { Handle, Position, NodeResizer } from '@xyflow/react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { validateNodeInput, getValidationRules } from '../../utils/validation';
-import { FileText, X, Eye, Loader2, CheckCircle } from 'lucide-react';
+import { FileText, X, Eye, Loader2, CheckCircle, Edit3 } from 'lucide-react';
 
 export default function CustomNode({ id, data, style, setNodes, onShowResult, isExecuting }) {
   const { theme } = useTheme();
   const [validationError, setValidationError] = useState(null);
   const [isValidating, setIsValidating] = useState(false);
+  const [isHtmlModalOpen, setHtmlModalOpen] = useState(false);
+  const [htmlContent, setHtmlContent] = useState(data.additional_input?.[data.title] || '');
+  const handleHtmlSave = () => {
+    data.onChange?.(id, htmlContent);
+    setHtmlModalOpen(false);
+  };
 
   // Debug logging
   // console.log('CustomNode render:', { id, isExecuting, hasResult: !!data.node_result });
@@ -304,7 +312,7 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult, is
         <div style={headerStyle}>
           <div style={headerLeftStyle}>
             <FileText size={10} style={{ marginRight: '3px', color: theme.colors.text.secondary }} />
-            {data.inputType && <div style={validationIndicatorStyle} />}
+            {data.inputType && data.inputType !== 'html' && <div style={validationIndicatorStyle} />}
             <div style={titleStyle}>
               {data.title.replace(/_/g, ' ')}
             </div>
@@ -359,7 +367,46 @@ export default function CustomNode({ id, data, style, setNodes, onShowResult, is
                 />
               ))}
             </>
-          ) : data.inputType === 'file' ? (
+          ) : data.inputType === 'html' ? (
+             <>
+               <button
+                 style={{
+                   border: 'none',
+                   background: 'transparent',
+                   cursor: 'pointer',
+                   padding: 4,
+                   alignSelf: 'flex-start'
+                 }}
+                 title="Open HTML Editor"
+                 onClick={e => {
+                   e.stopPropagation();
+                   setHtmlModalOpen(true);
+                 }}
+               >
+                 <Edit3 size={14} />
+               </button>
+               <Modal
+                 isOpen={isHtmlModalOpen}
+                 title="HTML Editor"
+                 onClose={() => setHtmlModalOpen(false)}
+                 onSubmit={handleHtmlSave}
+                 submitLabel="Save"
+                 modalWidth={'70vw'}
+                 contentHeight={'60vh'}
+                 scrollableContent={true}
+               >
+                 <div style={{ height: '100%' }} onClick={e => e.stopPropagation()}>
+                   <Editor
+                     height="100%"
+                     defaultLanguage="html"
+                     value={htmlContent}
+                     onChange={value => setHtmlContent(value || '')}
+                     options={{ minimap: { enabled: false }, fontSize: 12 }}
+                   />
+                 </div>
+               </Modal>
+             </>
+           ) : data.inputType === 'file' ? (
             <input
               type="file"
               className="custom-node-input"
